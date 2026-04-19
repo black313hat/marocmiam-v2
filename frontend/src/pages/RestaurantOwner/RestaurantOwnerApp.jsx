@@ -314,6 +314,7 @@ export default function RestaurantOwnerApp() {
                                     flex: 1, padding: '10px', borderRadius: '10px', border: 'none',
                                     background: '#fee2e2', color: '#dc2626', fontWeight: '700',
                                     fontSize: '13px', cursor: 'pointer',
+                                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                                   }}
                                 >
                                   <XCircle size={15} />
@@ -334,17 +335,13 @@ export default function RestaurantOwnerApp() {
                               </button>
                             )}
                             {order.status === 'preparing' && (
-                              <button
-                                onClick={() => updateOrderStatus(order.id, 'picked_up')}
-                                disabled={updating === order.id}
-                                style={{
-                                  flex: 1, padding: '10px', borderRadius: '10px', border: 'none',
-                                  background: '#cffafe', color: '#0891b2', fontWeight: '700',
-                                  fontSize: '13px', cursor: 'pointer',
-                                }}
-                              >
-                                🛵 Prêt pour livraison
-                              </button>
+                              <div style={{
+                                flex: 1, padding: '10px', borderRadius: '10px',
+                                background: '#fef9c3', color: '#ca8a04', fontWeight: '600',
+                                fontSize: '13px', textAlign: 'center',
+                              }}>
+                                ⏳ En attente d'un livreur...
+                              </div>
                             )}
                           </div>
                         </div>
