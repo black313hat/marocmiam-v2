@@ -1,10 +1,11 @@
 import { useState } from 'react';
-import { LayoutGrid, Store, Bike, ShoppingBag, Users, LogOut, Menu, X, ChevronRight } from 'lucide-react';
+import { LayoutGrid, Store, Bike, ShoppingBag, Users, LogOut, Menu, X, ChevronRight, ClipboardList } from 'lucide-react';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminRestaurants from './pages/AdminRestaurants';
 import AdminCouriers from './pages/AdminCouriers';
 import AdminOrders from './pages/AdminOrders';
 import AdminUsers from './pages/AdminUsers';
+import AdminApplications from './pages/AdminApplications';
 
 const NAV = [
     { key: 'dashboard', label: 'Dashboard', icon: LayoutGrid, color: '#00A651' },
@@ -12,6 +13,7 @@ const NAV = [
     { key: 'couriers', label: 'Couriers', icon: Bike, color: '#8b5cf6' },
     { key: 'orders', label: 'Orders', icon: ShoppingBag, color: '#f59e0b' },
     { key: 'users', label: 'Users', icon: Users, color: '#ec4899' },
+    { key: 'applications', label: 'Applications', icon: ClipboardList, color: '#00A651' },
 ];
 
 export default function AdminPanel({ user, onLogout }) {
@@ -24,6 +26,7 @@ export default function AdminPanel({ user, onLogout }) {
         couriers: <AdminCouriers />,
         orders: <AdminOrders />,
         users: <AdminUsers />,
+        applications: <AdminApplications />,
     };
 
     return (

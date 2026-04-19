@@ -18,6 +18,8 @@ import CourierDashboard from './pages/Courier/CourierDashboard';
 import Profile from './pages/Profile/Profile';
 import Restaurants from './pages/Restaurants/Restaurants';
 import AdminApp from './pages/Admin/AdminApp';
+import ApplyRestaurant from './pages/Apply/ApplyRestaurant';
+import ApplyCourier from './pages/Apply/ApplyCourier';
 
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
@@ -48,6 +50,8 @@ export default function App() {
           <Route path="/courier-dashboard" element={<PrivateRoute><CourierDashboard /></PrivateRoute>} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/restaurants" element={<Restaurants />} />
+          <Route path="/apply/restaurant" element={<ApplyRestaurant />} />
+          <Route path="/apply/courier" element={<ApplyCourier />} />
         </Route>
         {/* Auth */}
         <Route path="/login" element={<Login />} />

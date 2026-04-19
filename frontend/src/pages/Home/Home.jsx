@@ -22,7 +22,7 @@ const SECTIONS = [
     title: 'Devenir partenaire restaurant',
     sub: 'Augmentez vos ventes et touchez des milliers de clients dans votre ville',
     cta: 'Rejoindre en tant que restaurant',
-    href: '/restaurant-dashboard',
+    href: '/apply/restaurant',
     stats: ['0 frais fixes', '+40% ventes', 'Dashboard live'],
   },
   {
@@ -32,7 +32,7 @@ const SECTIONS = [
     title: 'Devenir livreur',
     sub: "Gagnez de l'argent en livrant quand vous voulez, où vous voulez",
     cta: 'Rejoindre en tant que livreur',
-    href: '/courier-dashboard',
+    href: '/apply/courier',
     stats: ['Horaires libres', 'Paiement hebdo', 'Équipement offert'],
   },
 ];
@@ -54,7 +54,7 @@ export default function Home() {
           const data = await res.json();
           const parts = [data.address?.road, data.address?.city || data.address?.town].filter(Boolean);
           setAddress(parts.join(', ') || '');
-        } catch {}
+        } catch { }
         setLocating(false);
       },
       () => setLocating(false)
