@@ -1,9 +1,7 @@
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, ShoppingBag, ClipboardList, User } from 'lucide-react';
+import { Home, ShoppingBag, User, Search } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { Home, ShoppingBag, User, Search } from 'lucide-react';
-
 export default function Layout() {
   const { itemCount } = useCart();
   const { user } = useAuth();
