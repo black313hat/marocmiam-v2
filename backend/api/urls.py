@@ -38,4 +38,13 @@ urlpatterns = [
     path('apply/courier/', views.apply_courier),
     path('admin/applications/', views.list_applications),
     path('admin/applications/<int:pk>/', views.update_application),
+    # Courier app
+    path('courier/me/', views.courier_me),
+    path('courier/online/', views.courier_toggle_online),
+    path('courier/available/', views.courier_available_orders),
+    path('courier/accept/<int:order_id>/', views.courier_accept_order),
+    path('courier/deliver/<int:order_id>/', views.courier_deliver_order),
+    path('courier/location/', views.courier_update_location),
+    path('courier/active/', views.courier_active_order),
+    path('courier/earnings/', views.courier_earnings),
 ]

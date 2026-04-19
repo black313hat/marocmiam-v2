@@ -65,12 +65,16 @@ class OrderItem(models.Model):
 
 
 class Courier(models.Model):
-    user            = models.OneToOneField(User, on_delete=models.CASCADE)
-    phone           = models.CharField(max_length=20)
-    is_available    = models.BooleanField(default=True)
-    current_lat     = models.FloatField(null=True, blank=True)
-    current_lng     = models.FloatField(null=True, blank=True)
-    current_order   = models.ForeignKey(Order, null=True, blank=True, on_delete=models.SET_NULL)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    phone = models.CharField(max_length=20)
+    is_available = models.BooleanField(default=True)
+    is_online = models.BooleanField(default=False)
+    current_lat = models.FloatField(null=True, blank=True)
+    current_lng = models.FloatField(null=True, blank=True)
+    current_order = models.ForeignKey('Order', null=True, blank=True, on_delete=models.SET_NULL, related_name='assigned_courier')
+    vehicle = models.CharField(max_length=50, blank=True, default='moto')
+    deliveries_count = models.IntegerField(default=0)
+    earnings_total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     def __str__(self):
         return f"Courier: {self.user.username}"

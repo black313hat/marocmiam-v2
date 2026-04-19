@@ -35,7 +35,7 @@ export default function Profile() {
   const menuItems = [
     { icon: ShoppingBag, label: 'My Orders', sub: 'View order history', path: '/orders', color: '#3b82f6' },
     { icon: Store, label: 'Restaurant Dashboard', sub: 'Manage your restaurant', path: '/restaurant-dashboard', color: '#8b5cf6' },
-    { icon: Bike, label: 'Courier Dashboard', sub: 'Manage deliveries', path: '/courier-dashboard', color: '#06b6d4' },
+    { icon: Bike, label: 'Courier Dashboard', sub: 'Manage deliveries', path: '/courier-app', color: '#06b6d4' },
     ...(user.is_staff ? [{ icon: Shield, label: 'Admin Panel', sub: 'Full platform control', path: '/admin', color: '#f59e0b' }] : []),
   ];
 

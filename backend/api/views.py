@@ -13,7 +13,7 @@ from .serializers import (
     CourierSerializer, RegisterSerializer, UserSerializer
 )
 from .models import Restaurant, MenuItem, Order, OrderItem, Courier, FCMToken, UserProfile
-
+from decimal import Decimal
 
 # ───── AUTH ─────
 
@@ -411,3 +411,148 @@ def update_application(request, pk):
         return Response({'error': 'Not found'}, status=404)
 
 
+# ───── COURIER APP ─────
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def courier_me(request):
+    try:
+        courier = Courier.objects.get(user=request.user)
+        return Response(CourierSerializer(courier).data)
+    except Courier.DoesNotExist:
+        return Response({'error': 'Not a courier'}, status=404)
+
+
+@api_view(['PATCH'])
+@permission_classes([permissions.IsAuthenticated])
+def courier_toggle_online(request):
+    try:
+        courier = Courier.objects.get(user=request.user)
+        courier.is_online = request.data.get('is_online', not courier.is_online)
+        courier.save()
+        return Response({'is_online': courier.is_online})
+    except Courier.DoesNotExist:
+        return Response({'error': 'Not a courier'}, status=404)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def courier_available_orders(request):
+    try:
+        Courier.objects.get(user=request.user)
+    except Courier.DoesNotExist:
+        return Response({'error': 'Not a courier'}, status=404)
+
+    orders = Order.objects.filter(
+        status='preparing'
+    ).exclude(
+        assigned_courier__isnull=False
+    ).order_by('-created_at')
+
+    return Response(OrderSerializer(orders, many=True).data)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def courier_accept_order(request, order_id):
+    try:
+        courier = Courier.objects.get(user=request.user)
+        order = Order.objects.get(id=order_id, status='preparing')
+
+        if Order.objects.filter(assigned_courier=courier, status='picked_up').exists():
+            return Response({'error': 'You already have an active delivery'}, status=400)
+
+        order.status = 'picked_up'
+        order.save()
+        courier.current_order = order
+        courier.save()
+
+        return Response({'status': 'Order accepted', 'order': OrderSerializer(order).data})
+    except Courier.DoesNotExist:
+        return Response({'error': 'Not a courier'}, status=404)
+    except Order.DoesNotExist:
+        return Response({'error': 'Order not available'}, status=404)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def courier_deliver_order(request, order_id):
+    try:
+        courier = Courier.objects.get(user=request.user)
+        order = Order.objects.get(id=order_id, status='picked_up')
+
+        order.status = 'delivered'
+        order.save()
+
+        courier.current_order = None
+        courier.deliveries_count += 1
+        courier.earnings_total += order.total_price * Decimal('0.67')
+        courier.save()
+
+        return Response({'status': 'Order delivered successfully'})
+    except Courier.DoesNotExist:
+        return Response({'error': 'Not a courier'}, status=404)
+    except Order.DoesNotExist:
+        return Response({'error': 'Order not found'}, status=404)
+
+
+@api_view(['PATCH'])
+@permission_classes([permissions.IsAuthenticated])
+def courier_update_location(request):
+    try:
+        courier = Courier.objects.get(user=request.user)
+        courier.current_lat = request.data.get('lat', courier.current_lat)
+        courier.current_lng = request.data.get('lng', courier.current_lng)
+        courier.save()
+
+        if courier.current_order:
+            Order.objects.filter(id=courier.current_order.id).update(
+                delivery_lat=courier.current_lat,
+                delivery_lng=courier.current_lng,
+            )
+
+        return Response({'status': 'location updated'})
+    except Courier.DoesNotExist:
+        return Response({'error': 'Not a courier'}, status=404)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def courier_active_order(request):
+    try:
+        courier = Courier.objects.get(user=request.user)
+        if courier.current_order:
+            return Response(OrderSerializer(courier.current_order).data)
+        active = Order.objects.filter(
+            assigned_courier=courier,
+            status='picked_up'
+        ).first()
+        if active:
+            return Response(OrderSerializer(active).data)
+        return Response(None)
+    except Courier.DoesNotExist:
+        return Response({'error': 'Not a courier'}, status=404)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def courier_earnings(request):
+    try:
+        courier = Courier.objects.get(user=request.user)
+        delivered = Order.objects.filter(
+            assigned_courier=courier,
+            status='delivered'
+        ).order_by('-created_at')
+
+        today = delivered.filter(
+            created_at__date=__import__('datetime').date.today()
+        )
+
+        return Response({
+            'total_deliveries': courier.deliveries_count,
+            'total_earnings': float(courier.earnings_total),
+            'today_deliveries': today.count(),
+            'today_earnings': float(sum(o.total_price * Decimal('0.67') for o in today)),
+        })
+    except Courier.DoesNotExist:
+        return Response({'error': 'Not a courier'}, status=404)
