@@ -12,21 +12,32 @@ export default function AdminLogin({ onLogin }) {
     if (!form.username || !form.password) { toast.error('Fill all fields'); return; }
     setLoading(true);
     try {
-      const res = await API.post('/auth/login/', form);
-      const user = res.data.user;
+      const res = await fetch('https://marocmiam.duckdns.org/api/auth/login/', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        toast.error(data.error || 'Invalid credentials');
+        setLoading(false);
+        return;
+      }
+
+      const user = data.user;
       if (!user.is_staff && !user.is_superuser) {
         toast.error('Access denied — Admin only');
         setLoading(false);
         return;
       }
-      localStorage.setItem('admin_token', res.data.access);
+
+      localStorage.setItem('admin_token', data.access);
       localStorage.setItem('admin_user', JSON.stringify(user));
-      // Set token for API calls
-      API.defaults.headers.common['Authorization'] = `Bearer ${res.data.access}`;
       toast.success('Welcome Admin 👋');
       onLogin(user);
     } catch {
-      toast.error('Invalid credentials');
+      toast.error('Connection error');
     }
     setLoading(false);
   }
