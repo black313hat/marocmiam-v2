@@ -107,6 +107,56 @@ class OrderDetailView(generics.RetrieveUpdateAPIView):
     def get_queryset(self):
         return Order.objects.filter(customer=self.request.user)
 
+import math
+
+def calculate_distance(lat1, lng1, lat2, lng2):
+    R = 6371
+    dlat = math.radians(lat2 - lat1)
+    dlng = math.radians(lng2 - lng1)
+    a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlng/2)**2
+    return R * 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
+
+def calculate_delivery_fee(distance_km):
+    if distance_km <= 1: return 10
+    elif distance_km <= 3: return 15
+    elif distance_km <= 5: return 20
+    elif distance_km <= 10: return 25
+    else: return 35
+
+def send_order_email(order):
+    try:
+        from django.core.mail import send_mail
+        items_text = '\n'.join([
+            f"{item.quantity}x {item.menu_item.name} — {float(item.price) * item.quantity:.0f} MAD"
+            for item in order.orderitem_set.all()
+        ])
+        subject = f"✅ Commande #{order.id} livrée — MarocMiam"
+        message = f"""
+Bonjour {order.customer.first_name or order.customer.username},
+
+Votre commande a été livrée avec succès! 🎉
+
+━━━━━━━━━━━━━━━━━━━━━
+🏪 Restaurant: {order.restaurant.name}
+━━━━━━━━━━━━━━━━━━━━━
+
+{items_text}
+
+━━━━━━━━━━━━━━━━━━━━━
+Produits:       {float(order.total_price) - float(order.delivery_fee) - float(order.service_fee):.0f} MAD
+Livraison:      {float(order.delivery_fee):.0f} MAD
+Frais service:  {float(order.service_fee):.0f} MAD
+━━━━━━━━━━━━━━━━━━━━━
+TOTAL:          {float(order.total_price):.0f} MAD
+Paiement:       {order.get_payment_method_display()}
+━━━━━━━━━━━━━━━━━━━━━
+
+Merci d'avoir choisi MarocMiam! 🇲🇦
+        """
+        send_mail(subject, message, 'noreply@marocmiam.com', [order.customer.email], fail_silently=True)
+    except Exception as e:
+        print(f"Email error: {e}")
+
 
 @api_view(['POST'])
 @permission_classes([permissions.IsAuthenticated])
@@ -117,26 +167,45 @@ def create_full_order(request):
     delivery_address = data.get('delivery_address', '')
     delivery_lat = data.get('delivery_lat')
     delivery_lng = data.get('delivery_lng')
+    payment_method = data.get('payment_method', 'cash')
 
     print("ORDER DATA:", data)
     print("ITEMS:", items)
 
     if not items:
         return Response({'error': 'No items provided'}, status=400)
-
     if not restaurant_id:
         return Response({'error': 'No restaurant provided'}, status=400)
 
     try:
-        total = sum(float(item['price']) * int(item['quantity']) for item in items)
+        restaurant = Restaurant.objects.get(id=restaurant_id)
+
+        # Calculate distance & delivery fee
+        distance_km = None
+        delivery_fee = 15  # default
+        if delivery_lat and delivery_lng and restaurant.lat and restaurant.lng:
+            distance_km = calculate_distance(
+                float(restaurant.lat), float(restaurant.lng),
+                float(delivery_lat), float(delivery_lng)
+            )
+            delivery_fee = calculate_delivery_fee(distance_km)
+
+        service_fee = 5
+        items_total = sum(float(item['price']) * int(item['quantity']) for item in items)
+        total_price = items_total + delivery_fee + service_fee
 
         order = Order.objects.create(
             customer=request.user,
-            restaurant_id=restaurant_id,
-            total_price=total,
+            restaurant=restaurant,
+            total_price=total_price,
+            delivery_fee=delivery_fee,
+            service_fee=service_fee,
+            payment_method=payment_method,
             delivery_address=delivery_address,
             delivery_lat=delivery_lat,
             delivery_lng=delivery_lng,
+            distance_km=distance_km,
+            commission_rate=20,
         )
 
         for item in items:
@@ -147,13 +216,12 @@ def create_full_order(request):
                 price=float(item['price']),
             )
 
-        print(f"Order #{order.id} created successfully!")
+        print(f"Order #{order.id} created! Total: {total_price} MAD (delivery: {delivery_fee}, service: {service_fee})")
         return Response(OrderSerializer(order).data, status=201)
 
     except Exception as e:
         print(f"ORDER ERROR: {e}")
         return Response({'error': str(e)}, status=400)
-
 # ───── COURIER ─────
 
 @api_view(['PATCH'])
@@ -492,6 +560,7 @@ def courier_deliver_order(request, order_id):
 
         order.status = 'delivered'
         order.save()
+        send_order_email(order)  # send email on delivery
 
         courier.current_order = None
         courier.deliveries_count += 1
@@ -698,6 +767,9 @@ def owner_stats(request):
             'pending_orders': pending.count(),
             'total_revenue': float(total_revenue),
             'today_revenue': float(today_revenue),
+            'net_revenue': float(total_revenue) * 0.80,
+            'net_today_revenue': float(today_revenue) * 0.80,
+            'commission_rate': 20,
             'rating': float(restaurant.rating),
             'is_open': restaurant.is_open,
         })

@@ -48,13 +48,18 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 
 class OrderSerializer(serializers.ModelSerializer):
-    items = OrderItemSerializer(many=True, read_only=True)
     customer_username = serializers.CharField(source='customer.username', read_only=True)
     restaurant_name = serializers.CharField(source='restaurant.name', read_only=True)
+    items = OrderItemSerializer(many=True, read_only=True, source='orderitem_set')
 
     class Meta:
         model = Order
-        fields = '__all__'
+        fields = [
+            'id', 'customer_username', 'restaurant_name', 'status',
+            'total_price', 'delivery_fee', 'service_fee', 'payment_method',
+            'delivery_address', 'delivery_lat', 'delivery_lng',
+            'distance_km', 'commission_rate', 'items', 'created_at',
+        ]
 
 
 class CourierSerializer(serializers.ModelSerializer):
