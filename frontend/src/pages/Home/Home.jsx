@@ -13,7 +13,6 @@ const TOP_CATEGORIES = [
   { key: 'Café', label: 'Cafés', emoji: '☕', color: '#8B4513' },
   { key: 'Fast Food', label: 'Fast Food', emoji: '🍟', color: '#FFC107' },
   { key: 'Barbecue', label: 'Grills', emoji: '🔥', color: '#E53935' },
-  { key: 'Pharmacy', label: 'Pharmacie', emoji: '💊', color: '#1976D2' },
 ];
 
 const CUISINE_FILTERS = ['Tous', 'Moroccan', 'Fast Food', 'Café', 'Barbecue', 'Restaurant', 'Supermarket'];
@@ -61,7 +60,7 @@ export default function Home() {
   return (
     <div style={{ paddingBottom: '80px' }}>
 
-      {/* Hero Section */}
+      {/* Hero */}
       <div style={{
         background: 'linear-gradient(135deg, #00A651 0%, #007a3d 100%)',
         padding: '20px 16px 28px',
@@ -99,10 +98,11 @@ export default function Home() {
                 {CITIES.map(c => (
                   <button key={c} onClick={() => { setCity(c); setShowCities(false); }} style={{
                     display: 'block', width: '100%', padding: '12px 16px',
-                    textAlign: 'left', fontSize: '14px', fontWeight: c === city ? '700' : '400',
-                    color: c === city ? 'var(--primary)' : 'var(--foreground)',
-                    background: c === city ? 'var(--primary-light)' : '#fff',
-                    borderBottom: '1px solid var(--border)',
+                    textAlign: 'left', fontSize: '14px',
+                    fontWeight: c === city ? '700' : '400',
+                    color: c === city ? '#00A651' : '#09090b',
+                    background: c === city ? 'rgba(0,166,81,0.1)' : '#fff',
+                    borderBottom: '1px solid rgba(0,0,0,0.08)',
                   }}>
                     📍 {c}
                   </button>
@@ -112,7 +112,6 @@ export default function Home() {
           </AnimatePresence>
         </div>
 
-        {/* Hero text */}
         <h1 style={{ color: '#fff', fontSize: '26px', fontWeight: '800', marginBottom: '6px', lineHeight: 1.2 }}>
           On vous livre plus<br />que des repas 🍴
         </h1>
@@ -120,7 +119,6 @@ export default function Home() {
           Restaurants, supermarchés, pharmacies et plus
         </p>
 
-        {/* Search bar */}
         <div style={{
           display: 'flex', alignItems: 'center', gap: '10px',
           background: '#fff', borderRadius: '12px', padding: '12px 16px',
@@ -148,15 +146,16 @@ export default function Home() {
                 gap: '6px', flexShrink: 0, padding: '12px 16px',
                 borderRadius: '14px', minWidth: '72px',
                 background: category === cat.key ? cat.color : '#fff',
-                border: category === cat.key ? 'none' : '1px solid var(--border)',
-                boxShadow: 'var(--shadow)',
+                border: category === cat.key ? 'none' : '1px solid rgba(0,0,0,0.08)',
+                boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
                 transition: 'all 0.2s',
+                cursor: 'pointer',
               }}
             >
               <span style={{ fontSize: '24px' }}>{cat.emoji}</span>
               <span style={{
                 fontSize: '11px', fontWeight: '600',
-                color: category === cat.key ? '#fff' : 'var(--foreground)',
+                color: category === cat.key ? '#fff' : '#09090b',
                 whiteSpace: 'nowrap',
               }}>
                 {cat.label}
@@ -176,11 +175,12 @@ export default function Home() {
             <div key={brand.name} style={{
               flexShrink: 0, width: '72px', textAlign: 'center',
               background: '#fff', borderRadius: '14px', padding: '12px 8px',
-              border: '1px solid var(--border)', boxShadow: 'var(--shadow)',
+              border: '1px solid rgba(0,0,0,0.08)',
+              boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
               cursor: 'pointer',
             }}>
               <div style={{ fontSize: '28px', marginBottom: '4px' }}>{brand.emoji}</div>
-              <p style={{ fontSize: '10px', fontWeight: '600', color: 'var(--foreground)' }}>
+              <p style={{ fontSize: '10px', fontWeight: '600', color: '#09090b' }}>
                 {brand.name}
               </p>
             </div>
@@ -188,16 +188,17 @@ export default function Home() {
         </div>
       </div>
 
-      {/* Cuisine filter tabs */}
+      {/* Cuisine filter */}
       <div style={{ padding: '20px 16px 0' }}>
         <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
           {CUISINE_FILTERS.map(c => (
             <button key={c} onClick={() => setCuisine(c)} style={{
               padding: '7px 16px', borderRadius: '20px', fontSize: '13px',
               fontWeight: '600', whiteSpace: 'nowrap', flexShrink: 0,
-              background: cuisine === c ? 'var(--foreground)' : '#fff',
-              color: cuisine === c ? '#fff' : 'var(--muted-fg)',
-              border: cuisine === c ? 'none' : '1px solid var(--border)',
+              cursor: 'pointer',
+              background: cuisine === c ? '#09090b' : '#fff',
+              color: cuisine === c ? '#fff' : '#64748b',
+              border: cuisine === c ? 'none' : '1px solid rgba(0,0,0,0.08)',
             }}>
               {c}
             </button>
@@ -210,7 +211,7 @@ export default function Home() {
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
           <h2 style={{ fontSize: '17px', fontWeight: '800' }}>
             {category === 'all' ? 'Tous les restaurants' : TOP_CATEGORIES.find(c => c.key === category)?.label}
-            <span style={{ fontSize: '13px', fontWeight: '400', color: 'var(--muted-fg)', marginLeft: '6px' }}>
+            <span style={{ fontSize: '13px', fontWeight: '400', color: '#64748b', marginLeft: '6px' }}>
               ({filtered.length})
             </span>
           </h2>
@@ -219,11 +220,11 @@ export default function Home() {
         {loading ? (
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
             {[...Array(6)].map((_, i) => (
-              <div key={i} style={{ height: '180px', background: 'var(--muted)', borderRadius: '14px' }} />
+              <div key={i} style={{ height: '180px', background: '#f1f5f9', borderRadius: '14px' }} />
             ))}
           </div>
         ) : filtered.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '40px', color: 'var(--muted-fg)' }}>
+          <div style={{ textAlign: 'center', padding: '40px', color: '#64748b' }}>
             <div style={{ fontSize: '48px', marginBottom: '12px' }}>🍽️</div>
             <p style={{ fontWeight: '600' }}>Aucun restaurant trouvé</p>
           </div>
@@ -239,11 +240,10 @@ export default function Home() {
                 style={{
                   background: '#fff', borderRadius: '14px',
                   overflow: 'hidden', cursor: 'pointer',
-                  boxShadow: 'var(--shadow)',
-                  border: '1px solid var(--border)',
+                  boxShadow: '0 1px 3px rgba(0,0,0,0.06)',
+                  border: '1px solid rgba(0,0,0,0.08)',
                 }}
               >
-                {/* Image */}
                 <div style={{ position: 'relative', height: '110px', overflow: 'hidden' }}>
                   <img
                     src={r.image_url || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&q=80'}
@@ -255,7 +255,6 @@ export default function Home() {
                     position: 'absolute', inset: 0,
                     background: 'linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)',
                   }} />
-                  {/* Favorite */}
                   <button
                     onClick={e => { e.stopPropagation(); toggleFav(r.id); }}
                     style={{
@@ -263,23 +262,72 @@ export default function Home() {
                       width: '28px', height: '28px', borderRadius: '50%',
                       background: 'rgba(0,0,0,0.3)', backdropFilter: 'blur(4px)',
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      border: 'none', cursor: 'pointer',
                     }}
                   >
-                    <Heart size={14} color={favorites.includes(r.id) ? '#ff4757' : '#fff'}
-                      fill={favorites.includes(r.id) ? '#ff4757' : 'none'} />
+                    <Heart
+                      size={14}
+                      color={favorites.includes(r.id) ? '#ff4757' : '#fff'}
+                      fill={favorites.includes(r.id) ? '#ff4757' : 'none'}
+                    />
                   </button>
-                  {/* Free delivery badge */}
-                  {r.delivery_fee === 0 && (
-                    <span style={{
-                      position: 'absolute', bottom: '6px', left: '6px',
-                      background: 'var(--primary)', color: '#fff',
-                      fontSize: '9px', fontWeight: '700', padding: '2px 6px',
-                      borderRadius: '6px',
-                    }}>
-                      Gratuit
-                    </span>
-                  )}
                 </div>
 
-                {/* Info */}
-                <div st
+                <div style={{ padding: '10px' }}>
+                  <h3 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '3px', lineHeight: 1.2 }}>
+                    {r.name}
+                  </h3>
+                  <p style={{ fontSize: '11px', color: '#64748b', marginBottom: '6px' }}>
+                    {r.category}
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', fontWeight: '700', color: '#f59e0b' }}>
+                      <Star size={11} fill="#f59e0b" color="#f59e0b" /> {r.rating}
+                    </span>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: '#64748b' }}>
+                      <Clock size={11} /> 25-35 min
+                    </span>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Opportunities section */}
+      <div style={{ padding: '8px 16px 16px' }}>
+        <h2 style={{ fontSize: '17px', fontWeight: '800', marginBottom: '12px' }}>Opportunités</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #00A651, #007a3d)',
+            borderRadius: '16px', padding: '16px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <div>
+              <p style={{ color: '#fff', fontWeight: '800', fontSize: '15px' }}>Devenir livreur</p>
+              <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px', marginTop: '2px' }}>
+                Gagnez de l'argent en livrant
+              </p>
+            </div>
+            <span style={{ fontSize: '40px' }}>🛵</span>
+          </div>
+          <div style={{
+            background: 'linear-gradient(135deg, #FF6B35, #e55a2b)',
+            borderRadius: '16px', padding: '16px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <div>
+              <p style={{ color: '#fff', fontWeight: '800', fontSize: '15px' }}>Devenir partenaire</p>
+              <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '12px', marginTop: '2px' }}>
+                Boostez vos ventes avec nous
+              </p>
+            </div>
+            <span style={{ fontSize: '40px' }}>🏪</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  );
+}
