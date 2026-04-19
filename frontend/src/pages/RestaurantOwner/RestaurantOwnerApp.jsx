@@ -11,7 +11,7 @@ import {
 import toast from 'react-hot-toast';
 
 const ORDER_STATUS_COLORS = {
-  pending:   { bg: '#fef9c3', color: '#ca8a04' },
+  pending: { bg: '#fef9c3', color: '#ca8a04' },
   confirmed: { bg: '#dbeafe', color: '#2563eb' },
   preparing: { bg: '#f3e8ff', color: '#7c3aed' },
   picked_up: { bg: '#cffafe', color: '#0891b2' },
@@ -67,7 +67,7 @@ export default function RestaurantOwnerApp() {
     try {
       const res = await API.get('/owner/orders/');
       setOrders(res.data);
-    } catch {}
+    } catch { }
   }
 
   async function toggleOpen() {
@@ -172,7 +172,7 @@ export default function RestaurantOwnerApp() {
         {/* Stats */}
         <div style={{ display: 'flex', gap: '8px' }}>
           {[
-            { label: "Aujourd'hui", value: `${stats?.today_revenue?.toFixed(0) || 0} MAD`, icon: '💰' },
+            { label: "Aujourd'hui", value: `${stats?.net_today_revenue?.toFixed(0) || 0} MAD`, icon: '💰', sub: 'net (80%)' },
             { label: 'En attente', value: stats?.pending_orders || 0, icon: '⏳' },
             { label: 'Note', value: stats?.rating?.toFixed(1) || '—', icon: '⭐' },
           ].map(s => (
@@ -183,6 +183,7 @@ export default function RestaurantOwnerApp() {
               <p style={{ fontSize: '16px', marginBottom: '2px' }}>{s.icon}</p>
               <p style={{ color: '#fff', fontWeight: '800', fontSize: '14px' }}>{s.value}</p>
               <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '10px' }}>{s.label}</p>
+              {s.sub && <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '9px' }}>{s.sub}</p>}
             </div>
           ))}
         </div>
@@ -243,8 +244,8 @@ export default function RestaurantOwnerApp() {
                   <div style={{ background: c.bg, padding: '8px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     <span style={{ fontSize: '12px', fontWeight: '700', color: c.color }}>
                       {order.status === 'pending' ? '🔔 NOUVELLE COMMANDE' :
-                       order.status === 'confirmed' ? '✅ CONFIRMÉE' :
-                       order.status === 'preparing' ? '👨‍🍳 EN PRÉPARATION' : order.status.toUpperCase()}
+                        order.status === 'confirmed' ? '✅ CONFIRMÉE' :
+                          order.status === 'preparing' ? '👨‍🍳 EN PRÉPARATION' : order.status.toUpperCase()}
                     </span>
                     <span style={{ fontSize: '11px', color: c.color }}>
                       {new Date(order.created_at).toLocaleTimeString('fr-MA', { hour: '2-digit', minute: '2-digit' })}
@@ -498,7 +499,9 @@ export default function RestaurantOwnerApp() {
             }}>
               {[
                 { label: 'Total commandes', value: stats?.total_orders || 0, icon: '📦' },
-                { label: 'Revenu total', value: `${stats?.total_revenue?.toFixed(0) || 0} MAD`, icon: '💰' },
+                { label: 'Revenu brut', value: `${stats?.total_revenue?.toFixed(0) || 0} MAD`, icon: '💵' },
+                { label: 'Votre part (80%)', value: `${stats?.net_revenue?.toFixed(0) || 0} MAD`, icon: '💰' },
+                { label: 'Commission (20%)', value: `${((stats?.total_revenue || 0) * 0.20).toFixed(0)} MAD`, icon: '🏦' },
               ].map(s => (
                 <div key={s.label} style={{ textAlign: 'center' }}>
                   <p style={{ fontSize: '24px', marginBottom: '4px' }}>{s.icon}</p>

@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
 const STATUS = {
-  pending:   { color: '#f59e0b', bg: '#fef9c3', icon: '⏳', label: 'Pending' },
+  pending: { color: '#f59e0b', bg: '#fef9c3', icon: '⏳', label: 'Pending' },
   confirmed: { color: '#3b82f6', bg: '#dbeafe', icon: '✅', label: 'Confirmed' },
   preparing: { color: '#8b5cf6', bg: '#f3e8ff', icon: '👨‍🍳', label: 'Preparing' },
   picked_up: { color: '#06b6d4', bg: '#cffafe', icon: '🛵', label: 'On the way' },
@@ -191,16 +191,43 @@ export default function Orders() {
                           }}>
                             <span>{item.quantity}× {item.menu_item_name}</span>
                             <span style={{ fontWeight: '600' }}>
-                              {(item.price * item.quantity).toFixed(2)} MAD
+                              {(item.price * item.quantity).toFixed(0)} MAD
                             </span>
                           </div>
                         ))}
+
+                        {/* Fee breakdown */}
+                        <div style={{ borderTop: '1px dashed #e2e8f0', marginTop: '8px', paddingTop: '8px' }}>
+                          {order.delivery_fee > 0 && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>
+                              <span>🛵 Livraison {order.distance_km ? `(${parseFloat(order.distance_km).toFixed(1)} km)` : ''}</span>
+                              <span>{parseFloat(order.delivery_fee).toFixed(0)} MAD</span>
+                            </div>
+                          )}
+                          {order.service_fee > 0 && (
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>
+                              <span>🛡️ Frais de service</span>
+                              <span>{parseFloat(order.service_fee).toFixed(0)} MAD</span>
+                            </div>
+                          )}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: '800', marginTop: '6px' }}>
+                            <span>Total</span>
+                            <span style={{ color: '#00A651' }}>{parseFloat(order.total_price).toFixed(0)} MAD</span>
+                          </div>
+                          {order.payment_method && (
+                            <div style={{ marginTop: '6px', fontSize: '12px', color: '#64748b' }}>
+                              {order.payment_method === 'cash' ? '💵 Paiement en espèces' : '💳 Paiement par carte'}
+                            </div>
+                          )}
+                        </div>
+
                         <button
                           onClick={() => navigate('/')}
                           style={{
                             marginTop: '12px', width: '100%', padding: '10px',
                             borderRadius: '10px', background: 'var(--muted)',
                             fontSize: '13px', fontWeight: '600', color: 'var(--muted-fg)',
+                            border: 'none', cursor: 'pointer',
                           }}
                         >
                           🔄 Reorder
