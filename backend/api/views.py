@@ -12,6 +12,7 @@ from .serializers import (
     OrderSerializer, OrderItemSerializer,
     CourierSerializer, RegisterSerializer, UserSerializer
 )
+from .models import Restaurant, MenuItem, Order, OrderItem, Courier, FCMToken, UserProfile
 
 
 # ───── AUTH ─────
@@ -312,3 +313,101 @@ def list_users(request):
         'date_joined': u.date_joined,
     } for u in users]
     return Response(data)
+# ───── USER PROFILES & ROLES ─────
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def apply_restaurant_owner(request):
+    data = request.data
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    profile.role = 'restaurant_owner'
+    profile.status = 'pending'
+    profile.phone = data.get('phone', '')
+    profile.city = data.get('city', '')
+    profile.restaurant_name = data.get('restaurant_name', '')
+    profile.restaurant_address = data.get('restaurant_address', '')
+    profile.restaurant_category = data.get('restaurant_category', '')
+    profile.save()
+    return Response({'status': 'Application submitted — pending approval'})
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def apply_courier(request):
+    data = request.data
+    profile, created = UserProfile.objects.get_or_create(user=request.user)
+    profile.role = 'courier'
+    profile.status = 'pending'
+    profile.phone = data.get('phone', '')
+    profile.city = data.get('city', '')
+    profile.vehicle = data.get('vehicle', '')
+    profile.id_card = data.get('id_card', '')
+    profile.save()
+    return Response({'status': 'Application submitted — pending approval'})
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def my_profile(request):
+    profile, created = UserProfile.objects.get_or_create(
+        user=request.user,
+        defaults={'role': 'customer', 'status': 'approved'}
+    )
+    from .serializers import UserProfileSerializer
+    return Response({
+        'user': UserSerializer(request.user).data,
+        'profile': UserProfileSerializer(profile).data,
+    })
+
+
+# ───── ADMIN — MANAGE APPLICATIONS ─────
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAdminUser])
+def list_applications(request):
+    role = request.query_params.get('role')
+    status = request.query_params.get('status', 'pending')
+    profiles = UserProfile.objects.filter(status=status)
+    if role:
+        profiles = profiles.filter(role=role)
+    from .serializers import UserProfileSerializer
+    return Response(UserProfileSerializer(profiles, many=True).data)
+
+
+@api_view(['PATCH'])
+@permission_classes([permissions.IsAdminUser])
+def update_application(request, pk):
+    try:
+        profile = UserProfile.objects.get(pk=pk)
+        new_status = request.data.get('status')
+        profile.status = new_status
+        profile.save()
+
+        if new_status == 'approved' and profile.role == 'restaurant_owner':
+            Restaurant.objects.get_or_create(
+                name=profile.restaurant_name or f"{profile.user.username}'s Restaurant",
+                defaults={
+                    'address': profile.restaurant_address,
+                    'city': profile.city,
+                    'phone': profile.phone,
+                    'category': profile.restaurant_category or 'Restaurant',
+                    'is_open': True,
+                    'rating': 0.0,
+                    'description': f"Restaurant by {profile.user.username}",
+                }
+            )
+
+        if new_status == 'approved' and profile.role == 'courier':
+            Courier.objects.get_or_create(
+                user=profile.user,
+                defaults={
+                    'phone': profile.phone,
+                    'is_available': True,
+                }
+            )
+
+        return Response({'status': f'Application {new_status}'})
+    except UserProfile.DoesNotExist:
+        return Response({'error': 'Not found'}, status=404)
+
+

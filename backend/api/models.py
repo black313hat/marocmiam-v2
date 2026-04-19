@@ -83,3 +83,32 @@ class FCMToken(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - FCM Token"
+    
+
+class UserProfile(models.Model):
+    ROLE_CHOICES = [
+        ('customer', 'Customer'),
+        ('restaurant_owner', 'Restaurant Owner'),
+        ('courier', 'Courier'),
+    ]
+    STATUS_CHOICES = [
+        ('pending', 'Pending'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
+    ]
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default='customer')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='approved')
+    phone = models.CharField(max_length=20, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    # Restaurant owner fields
+    restaurant_name = models.CharField(max_length=200, blank=True)
+    restaurant_address = models.CharField(max_length=300, blank=True)
+    restaurant_category = models.CharField(max_length=100, blank=True)
+    # Courier fields
+    vehicle = models.CharField(max_length=50, blank=True)
+    id_card = models.CharField(max_length=50, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.role}"

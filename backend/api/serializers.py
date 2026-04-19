@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Restaurant, MenuItem, Order, OrderItem, Courier
-
+from .models import Restaurant, MenuItem, Order, OrderItem, Courier, UserProfile
 
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
@@ -63,4 +62,13 @@ class CourierSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Courier
+        fields = '__all__'
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(source='user.username', read_only=True)
+    email = serializers.CharField(source='user.email', read_only=True)
+
+    class Meta:
+        model = UserProfile
         fields = '__all__'

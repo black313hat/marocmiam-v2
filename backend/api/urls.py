@@ -32,4 +32,10 @@ urlpatterns = [
     # Push notifications
     path('notifications/token/', views.save_fcm_token),
     path('notifications/send/', views.send_notification_to_user),
+    # User profiles & applications
+    path('profile/me/', views.my_profile),
+    path('apply/restaurant/', views.apply_restaurant_owner),
+    path('apply/courier/', views.apply_courier),
+    path('admin/applications/', views.list_applications),
+    path('admin/applications/<int:pk>/', views.update_application),
 ]
