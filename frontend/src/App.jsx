@@ -17,6 +17,8 @@ import RestaurantDashboard from './pages/Restaurant/RestaurantDashboard';
 import CourierDashboard from './pages/Courier/CourierDashboard';
 import Profile from './pages/Profile/Profile';
 import Restaurants from './pages/Restaurants/Restaurants';
+import AdminApp from './pages/Admin/AdminApp';
+
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
   return user ? children : <Navigate to="/login" />;
@@ -35,6 +37,7 @@ export default function App() {
       <Toaster position="top-center" toastOptions={{ style: { borderRadius: '12px', fontFamily: 'Inter, sans-serif' } }} />
       <Routes>
         {/* Customer routes with bottom nav */}
+        <Route path="/admin-panel" element={<AdminApp />} />
         <Route element={<Layout />}>
           <Route path="/" element={<Home />} />
           <Route path="/restaurant/:id" element={<Restaurant />} />

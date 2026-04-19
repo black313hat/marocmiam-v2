@@ -295,3 +295,20 @@ def notify_order_status(order):
         tokens = FCMToken.objects.filter(user=order.customer).values_list('token', flat=True)
         if tokens:
             send_fcm_notification(list(tokens), title, body, {'order_id': str(order.id)})
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAdminUser])
+def list_users(request):
+    users = User.objects.all().order_by('-date_joined')
+    data = [{
+        'id': u.id,
+        'username': u.username,
+        'email': u.email,
+        'first_name': u.first_name,
+        'last_name': u.last_name,
+        'is_staff': u.is_staff,
+        'is_superuser': u.is_superuser,
+        'date_joined': u.date_joined,
+    } for u in users]
+    return Response(data)

@@ -7,7 +7,7 @@ urlpatterns = [
     path('auth/register/', views.register),
     path('auth/login/', views.login),
     path('auth/refresh/', TokenRefreshView.as_view()),
-
+    path('users/', views.list_users),
     # Restaurants (public)
     path('restaurants/', views.RestaurantListView.as_view()),
     path('restaurants/<int:pk>/', views.RestaurantDetailView.as_view()),
