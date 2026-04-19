@@ -32,13 +32,15 @@ export default function AdminPanel({ user, onLogout }) {
             {/* Sidebar */}
             <aside style={{
                 width: sidebarOpen ? '240px' : '0px',
-                minHeight: '100vh', background: '#fff',
+                minHeight: '100vh',
+                background: '#fff',
                 borderRight: '1px solid #e2e8f0',
                 transition: 'width 0.3s ease',
-                overflow: 'hidden', flexShrink: 0,
-                display: 'flex', flexDirection: 'column',
+                overflow: 'hidden',
+                flexShrink: 0,
+                display: 'flex',
+                flexDirection: 'column',
             }}>
-                {/* Logo */}
                 <div style={{ padding: '24px 20px 16px', borderBottom: '1px solid #f1f5f9' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                         <span style={{ fontSize: '28px' }}>🍴</span>
@@ -49,12 +51,11 @@ export default function AdminPanel({ user, onLogout }) {
                     </div>
                 </div>
 
-                {/* User info */}
-                <div style={{ padding: '12px 20px', background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
+                <div style={{ padding: '16px 20px', background: '#f8fafc', borderBottom: '1px solid #f1f5f9' }}>
                     <div style={{
-                        width: '36px', height: '36px', borderRadius: '50%',
-                        background: '#00A651', color: '#fff', display: 'flex',
-                        alignItems: 'center', justifyContent: 'center',
+                        width: '40px', height: '40px', borderRadius: '50%',
+                        background: '#00A651', color: '#fff',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontWeight: '800', fontSize: '16px', marginBottom: '8px',
                     }}>
                         {user.username[0].toUpperCase()}
@@ -65,8 +66,7 @@ export default function AdminPanel({ user, onLogout }) {
                     </p>
                 </div>
 
-                {/* Nav */}
-                <nav style={{ flex: 1, padding: '12px 12px' }}>
+                <nav style={{ flex: 1, padding: '12px' }}>
                     {NAV.map(({ key, label, icon: Icon, color }) => {
                         const active = page === key;
                         return (
@@ -77,9 +77,8 @@ export default function AdminPanel({ user, onLogout }) {
                                     display: 'flex', alignItems: 'center', gap: '12px',
                                     width: '100%', padding: '11px 12px', borderRadius: '12px',
                                     marginBottom: '4px', border: 'none', cursor: 'pointer',
-                                    background: active ? `${color}15` : 'transparent',
-                                    transition: 'all 0.15s',
-                                    textAlign: 'left',
+                                    background: active ? color + '15' : 'transparent',
+                                    transition: 'all 0.15s', textAlign: 'left',
                                 }}
                             >
                                 <div style={{
@@ -91,18 +90,21 @@ export default function AdminPanel({ user, onLogout }) {
                                     <Icon size={16} color={active ? '#fff' : '#64748b'} />
                                 </div>
                                 <span style={{
-                                    fontSize: '13px', fontWeight: active ? '700' : '500',
-                                    color: active ? color : '#64748b', whiteSpace: 'nowrap',
+                                    fontSize: '13px',
+                                    fontWeight: active ? '700' : '500',
+                                    color: active ? color : '#64748b',
+                                    whiteSpace: 'nowrap',
                                 }}>
                                     {label}
                                 </span>
-                                {active && <ChevronRight size={14} color={color} style={{ marginLeft: 'auto' }} />}
+                                {active && (
+                                    <ChevronRight size={14} color={color} style={{ marginLeft: 'auto' }} />
+                                )}
                             </button>
                         );
                     })}
                 </nav>
 
-                {/* Logout */}
                 <div style={{ padding: '12px' }}>
                     <button
                         onClick={onLogout}
@@ -118,13 +120,13 @@ export default function AdminPanel({ user, onLogout }) {
                 </div>
             </aside>
 
-            {/* Main content */}
+            {/* Main */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0 }}>
-
-                {/* Top bar */}
                 <header style={{
-                    height: '56px', background: '#fff', borderBottom: '1px solid #e2e8f0',
-                    display: 'flex', alignItems: 'center', padding: '0 24px', gap: '16px',
+                    height: '56px', background: '#fff',
+                    borderBottom: '1px solid #e2e8f0',
+                    display: 'flex', alignItems: 'center',
+                    padding: '0 24px', gap: '16px',
                     position: 'sticky', top: 0, zIndex: 10,
                 }}>
                     <button
@@ -136,26 +138,17 @@ export default function AdminPanel({ user, onLogout }) {
                     <h1 style={{ fontSize: '16px', fontWeight: '700', color: '#09090b' }}>
                         {NAV.find(n => n.key === page)?.label}
                     </h1>
-                    <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <div style={{ marginLeft: 'auto' }}>
+                        <a href="/" target="_blank" rel="noreferrer" style={{ fontSize: '12px', fontWeight: '600', color: '#00A651', background: 'rgba(0,166,81,0.1)', padding: '6px 12px', borderRadius: '8px', textDecoration: 'none' }}>
+                            View App
+                        </a>
+                    </div>
+                </header>
 
-                        href="/"
-                        target="_blank"
-                        style={{
-                            fontSize: '12px', fontWeight: '600', color: '#00A651',
-                            background: 'rgba(0,166,81,0.1)', padding: '6px 12px',
-                            borderRadius: '8px', textDecoration: 'none',
-                        }}
-            >
-                        View App ↗
-                    </a>
-            </div>
-        </header>
-
-        {/* Page content */ }
-    <main style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
-        {pages[page]}
-    </main>
-      </div >
-    </div >
-  );
+                <main style={{ flex: 1, padding: '24px', overflowY: 'auto' }}>
+                    {pages[page]}
+                </main>
+            </div >
+        </div >
+    );
 }
