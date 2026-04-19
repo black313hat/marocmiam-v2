@@ -2,6 +2,7 @@ import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { Home, ShoppingBag, ClipboardList, User } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { Home, ShoppingBag, User, Search } from 'lucide-react';
 
 export default function Layout() {
   const { itemCount } = useCart();
@@ -10,10 +11,10 @@ export default function Layout() {
   const navigate = useNavigate();
 
   const navItems = [
-    { path: '/', icon: Home, label: 'Home' },
-    { path: '/orders', icon: ClipboardList, label: 'Orders' },
-    { path: '/cart', icon: ShoppingBag, label: 'Cart', badge: itemCount },
-    { path: '/profile', icon: User, label: user ? (user.first_name || user.username) : 'Profile' },
+    { path: '/', icon: Home, label: 'Accueil' },
+    { path: '/restaurants', icon: Search, label: 'Commander' },
+    { path: '/cart', icon: ShoppingBag, label: 'Panier', badge: itemCount },
+    { path: '/profile', icon: User, label: user ? (user.first_name || user.username) : 'Profil' },
   ];
 
   return (

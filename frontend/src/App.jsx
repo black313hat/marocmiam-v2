@@ -16,6 +16,7 @@ import AdminOrders from './pages/Admin/AdminOrders';
 import RestaurantDashboard from './pages/Restaurant/RestaurantDashboard';
 import CourierDashboard from './pages/Courier/CourierDashboard';
 import Profile from './pages/Profile/Profile';
+import Restaurants from './pages/Restaurants/Restaurants';
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
   return user ? children : <Navigate to="/login" />;
@@ -43,6 +44,7 @@ export default function App() {
           <Route path="/restaurant-dashboard" element={<PrivateRoute><RestaurantDashboard /></PrivateRoute>} />
           <Route path="/courier-dashboard" element={<PrivateRoute><CourierDashboard /></PrivateRoute>} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/restaurants" element={<Restaurants />} />
         </Route>
         {/* Auth */}
         <Route path="/login" element={<Login />} />
