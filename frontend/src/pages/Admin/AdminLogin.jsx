@@ -12,7 +12,7 @@ export default function AdminLogin({ onLogin }) {
     if (!form.username || !form.password) { toast.error('Fill all fields'); return; }
     setLoading(true);
     try {
-      const res = await fetch('https://marocmiam.duckdns.org/api/auth/login/', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/auth/login/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),
