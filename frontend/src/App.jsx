@@ -2,17 +2,12 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuth } from './context/AuthContext';
 import Layout from './components/Layout';
-import AdminLayout from './components/AdminLayout';
 import Home from './pages/Home/Home';
 import Restaurant from './pages/Restaurant/Restaurant';
 import Cart from './pages/Cart/Cart';
 import Checkout from './pages/Checkout/Checkout';
 import Login from './pages/Login/Login';
 import Orders from './pages/Orders/Orders';
-import AdminDashboard from './pages/Admin/AdminDashboard';
-import AdminRestaurants from './pages/Admin/AdminRestaurants';
-import AdminCouriers from './pages/Admin/AdminCouriers';
-import AdminOrders from './pages/Admin/AdminOrders';
 import RestaurantDashboard from './pages/Restaurant/RestaurantDashboard';
 import CourierDashboard from './pages/Courier/CourierDashboard';
 import Profile from './pages/Profile/Profile';
@@ -57,14 +52,7 @@ export default function App() {
         </Route>
         {/* Auth */}
         <Route path="/login" element={<Login />} />
-        {/* Admin routes with sidebar */}
-        <Route element={<AdminRoute><AdminLayout /></AdminRoute>}>
-          <Route path="/admin" element={<Navigate to="/admin/dashboard" />} />
-          <Route path="/admin/dashboard" element={<AdminDashboard />} />
-          <Route path="/admin/restaurants" element={<AdminRestaurants />} />
-          <Route path="/admin/couriers" element={<AdminCouriers />} />
-          <Route path="/admin/orders" element={<AdminOrders />} />
-        </Route>
+       
       </Routes>
     </BrowserRouter>
   );
