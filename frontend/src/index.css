@@ -9,11 +9,11 @@ body {
 }
 
 :root {
-  --primary: #00a651;
+  --primary: #00A651;
   --primary-dark: #007a3d;
   --primary-light: rgba(0,166,81,0.1);
-  --secondary: #f97316;
-  --accent: #8b5cf6;
+  --secondary: #FF6B35;
+  --accent: #FFC107;
   --background: #f4f4f5;
   --card: #ffffff;
   --border: rgba(0,0,0,0.08);

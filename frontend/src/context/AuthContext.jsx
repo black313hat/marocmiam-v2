@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import API from '../services/api';
-
+import { requestNotificationPermission } from '../firebase';
 const AuthContext = createContext();
 
 export const AuthProvider = ({ children }) => {
@@ -22,6 +22,12 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('refresh_token', res.data.refresh);
     localStorage.setItem('user', JSON.stringify(res.data.user));
     setUser(res.data.user);
+    // Request notification permission and save token
+    requestNotificationPermission().then(token => {
+      if (token) {
+        API.post('/notifications/token/', { token }).catch(() => { });
+      }
+    });
     return res;
   };
 
@@ -31,6 +37,12 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('refresh_token', res.data.refresh);
     localStorage.setItem('user', JSON.stringify(res.data.user));
     setUser(res.data.user);
+    // Request notification permission and save token
+    requestNotificationPermission().then(token => {
+      if (token) {
+        API.post('/notifications/token/', { token }).catch(() => { });
+      }
+    });
     return res;
   };
 

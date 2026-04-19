@@ -28,4 +28,8 @@ urlpatterns = [
     # Courier tracking
     path('courier/location/', views.update_courier_location),
     path('courier/location/<int:order_id>/', views.get_courier_location),
+
+    # Push notifications
+    path('notifications/token/', views.save_fcm_token),
+    path('notifications/send/', views.send_notification_to_user),
 ]

@@ -1,10 +1,12 @@
 from rest_framework import generics, status, permissions
+import os
+import requests as http_requests
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from .models import Restaurant, MenuItem, Order, OrderItem, Courier
+from .models import Restaurant, MenuItem, Order, OrderItem, Courier, FCMToken
 from .serializers import (
     RestaurantSerializer, MenuItemSerializer,
     OrderSerializer, OrderItemSerializer,
@@ -203,11 +205,93 @@ class CourierDetailView(generics.RetrieveUpdateAPIView):
 
 class AdminOrderDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = OrderSerializer
-    permission_classes = [permissions.IsAdminUser]
+    permission_classes = [permissions.IsAuthenticated]
     queryset = Order.objects.all()
+
+    def perform_update(self, serializer):
+        order = serializer.save()
+        notify_order_status(order)
 
 
 class AdminRestaurantDetailView(generics.RetrieveUpdateAPIView):
     serializer_class = RestaurantSerializer
     permission_classes = [permissions.IsAdminUser]
     queryset = Restaurant.objects.all()
+
+
+# ───── PUSH NOTIFICATIONS ─────
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def save_fcm_token(request):
+    token = request.data.get('token')
+    if not token:
+        return Response({'error': 'No token provided'}, status=400)
+    FCMToken.objects.get_or_create(user=request.user, token=token)
+    return Response({'status': 'token saved'})
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def send_notification_to_user(request):
+    """Send notification to a specific user (admin only)"""
+    if not request.user.is_staff:
+        return Response({'error': 'Admin only'}, status=403)
+
+    user_id = request.data.get('user_id')
+    title = request.data.get('title', 'MarocMiam')
+    body = request.data.get('body', '')
+
+    tokens = FCMToken.objects.filter(user_id=user_id).values_list('token', flat=True)
+    if not tokens:
+        return Response({'error': 'No tokens found'}, status=404)
+
+    send_fcm_notification(list(tokens), title, body)
+    return Response({'status': 'sent'})
+
+
+def send_fcm_notification(tokens, title, body, data=None):
+    """Send FCM notification to a list of tokens"""
+    FCM_SERVER_KEY = os.environ.get('FCM_SERVER_KEY', '')
+    if not FCM_SERVER_KEY:
+        print("No FCM_SERVER_KEY set")
+        return
+
+    payload = {
+        'registration_ids': tokens,
+        'notification': {
+            'title': title,
+            'body': body,
+            'icon': 'https://marocmiam.vercel.app/icon.png',
+        },
+        'data': data or {},
+    }
+
+    try:
+        res = http_requests.post(
+            'https://fcm.googleapis.com/fcm/send',
+            json=payload,
+            headers={
+                'Authorization': f'key={FCM_SERVER_KEY}',
+                'Content-Type': 'application/json',
+            }
+        )
+        print(f"FCM response: {res.status_code} {res.text}")
+    except Exception as e:
+        print(f"FCM error: {e}")
+
+
+def notify_order_status(order):
+    """Call this whenever order status changes"""
+    status_messages = {
+        'confirmed':  ('Order Confirmed ✅', f'Your order #{order.id} has been confirmed!'),
+        'preparing':  ('Being Prepared 👨‍🍳', f'Your order #{order.id} is being prepared.'),
+        'picked_up':  ('On the Way 🛵', f'Your order #{order.id} is on its way!'),
+        'delivered':  ('Delivered 🎉', f'Your order #{order.id} has been delivered. Enjoy!'),
+        'cancelled':  ('Order Cancelled ❌', f'Your order #{order.id} has been cancelled.'),
+    }
+    if order.status in status_messages:
+        title, body = status_messages[order.status]
+        tokens = FCMToken.objects.filter(user=order.customer).values_list('token', flat=True)
+        if tokens:
+            send_fcm_notification(list(tokens), title, body, {'order_id': str(order.id)})
