@@ -47,4 +47,13 @@ urlpatterns = [
     path('courier/location/', views.courier_update_location),
     path('courier/active/', views.courier_active_order),
     path('courier/earnings/', views.courier_earnings),
+    # Restaurant owner dashboard
+    path('owner/restaurant/', views.owner_my_restaurant),
+    path('owner/restaurant/update/', views.owner_update_restaurant),
+    path('owner/orders/', views.owner_orders),
+    path('owner/orders/<int:order_id>/', views.owner_update_order),
+    path('owner/menu/', views.owner_menu),
+    path('owner/menu/add/', views.owner_add_menu_item),
+    path('owner/menu/<int:item_id>/', views.owner_menu_item),
+    path('owner/stats/', views.owner_stats),
 ]

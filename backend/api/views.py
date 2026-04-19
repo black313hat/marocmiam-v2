@@ -565,3 +565,141 @@ def courier_earnings(request):
         })
     except Courier.DoesNotExist:
         return Response({'error': 'Not a courier'}, status=404)
+    
+
+# ───── RESTAURANT OWNER DASHBOARD ─────
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def owner_my_restaurant(request):
+    try:
+        profile = UserProfile.objects.get(user=request.user, role='restaurant_owner', status='approved')
+        restaurant = Restaurant.objects.get(name=profile.restaurant_name)
+        return Response(RestaurantSerializer(restaurant).data)
+    except UserProfile.DoesNotExist:
+        return Response({'error': 'Not a restaurant owner'}, status=404)
+    except Restaurant.DoesNotExist:
+        return Response({'error': 'Restaurant not found'}, status=404)
+
+
+@api_view(['PATCH'])
+@permission_classes([permissions.IsAuthenticated])
+def owner_update_restaurant(request):
+    try:
+        profile = UserProfile.objects.get(user=request.user, role='restaurant_owner', status='approved')
+        restaurant = Restaurant.objects.get(name=profile.restaurant_name)
+        for field in ['is_open', 'description', 'phone', 'image_url']:
+            if field in request.data:
+                setattr(restaurant, field, request.data[field])
+        restaurant.save()
+        return Response(RestaurantSerializer(restaurant).data)
+    except (UserProfile.DoesNotExist, Restaurant.DoesNotExist):
+        return Response({'error': 'Not found'}, status=404)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def owner_orders(request):
+    try:
+        profile = UserProfile.objects.get(user=request.user, role='restaurant_owner', status='approved')
+        restaurant = Restaurant.objects.get(name=profile.restaurant_name)
+        orders = Order.objects.filter(restaurant=restaurant).order_by('-created_at')
+        return Response(OrderSerializer(orders, many=True).data)
+    except (UserProfile.DoesNotExist, Restaurant.DoesNotExist):
+        return Response({'error': 'Not found'}, status=404)
+
+
+@api_view(['PATCH'])
+@permission_classes([permissions.IsAuthenticated])
+def owner_update_order(request, order_id):
+    try:
+        profile = UserProfile.objects.get(user=request.user, role='restaurant_owner', status='approved')
+        restaurant = Restaurant.objects.get(name=profile.restaurant_name)
+        order = Order.objects.get(id=order_id, restaurant=restaurant)
+        if 'status' in request.data:
+            order.status = request.data['status']
+            order.save()
+        return Response(OrderSerializer(order).data)
+    except (UserProfile.DoesNotExist, Restaurant.DoesNotExist, Order.DoesNotExist):
+        return Response({'error': 'Not found'}, status=404)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def owner_menu(request):
+    try:
+        profile = UserProfile.objects.get(user=request.user, role='restaurant_owner', status='approved')
+        restaurant = Restaurant.objects.get(name=profile.restaurant_name)
+        items = MenuItem.objects.filter(restaurant=restaurant)
+        return Response(MenuItemSerializer(items, many=True).data)
+    except (UserProfile.DoesNotExist, Restaurant.DoesNotExist):
+        return Response({'error': 'Not found'}, status=404)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def owner_add_menu_item(request):
+    try:
+        profile = UserProfile.objects.get(user=request.user, role='restaurant_owner', status='approved')
+        restaurant = Restaurant.objects.get(name=profile.restaurant_name)
+        item = MenuItem.objects.create(
+            restaurant=restaurant,
+            name=request.data.get('name', ''),
+            description=request.data.get('description', ''),
+            price=request.data.get('price', 0),
+            category=request.data.get('category', 'Plats'),
+            is_available=True,
+        )
+        return Response(MenuItemSerializer(item).data, status=201)
+    except (UserProfile.DoesNotExist, Restaurant.DoesNotExist):
+        return Response({'error': 'Not found'}, status=404)
+
+
+@api_view(['PATCH', 'DELETE'])
+@permission_classes([permissions.IsAuthenticated])
+def owner_menu_item(request, item_id):
+    try:
+        profile = UserProfile.objects.get(user=request.user, role='restaurant_owner', status='approved')
+        restaurant = Restaurant.objects.get(name=profile.restaurant_name)
+        item = MenuItem.objects.get(id=item_id, restaurant=restaurant)
+
+        if request.method == 'DELETE':
+            item.delete()
+            return Response({'status': 'deleted'})
+
+        for field in ['name', 'description', 'price', 'category', 'is_available']:
+            if field in request.data:
+                setattr(item, field, request.data[field])
+        item.save()
+        return Response(MenuItemSerializer(item).data)
+    except (UserProfile.DoesNotExist, Restaurant.DoesNotExist, MenuItem.DoesNotExist):
+        return Response({'error': 'Not found'}, status=404)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def owner_stats(request):
+    try:
+        profile = UserProfile.objects.get(user=request.user, role='restaurant_owner', status='approved')
+        restaurant = Restaurant.objects.get(name=profile.restaurant_name)
+        import datetime
+        today = datetime.date.today()
+        all_orders = Order.objects.filter(restaurant=restaurant)
+        today_orders = all_orders.filter(created_at__date=today)
+        delivered = all_orders.filter(status='delivered')
+        today_delivered = today_orders.filter(status='delivered')
+        total_revenue = sum(o.total_price for o in delivered)
+        today_revenue = sum(o.total_price for o in today_delivered)
+        pending = all_orders.filter(status__in=['pending', 'confirmed', 'preparing'])
+
+        return Response({
+            'total_orders': all_orders.count(),
+            'today_orders': today_orders.count(),
+            'pending_orders': pending.count(),
+            'total_revenue': float(total_revenue),
+            'today_revenue': float(today_revenue),
+            'rating': float(restaurant.rating),
+            'is_open': restaurant.is_open,
+        })
+    except (UserProfile.DoesNotExist, Restaurant.DoesNotExist):
+        return Response({'error': 'Not found'}, status=404)

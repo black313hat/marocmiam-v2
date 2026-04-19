@@ -16,6 +16,7 @@ import AdminApp from './pages/Admin/AdminApp';
 import ApplyRestaurant from './pages/Apply/ApplyRestaurant';
 import ApplyCourier from './pages/Apply/ApplyCourier';
 import CourierApp from './pages/CourierApp/CourierApp';
+import RestaurantOwnerApp from './pages/RestaurantOwner/RestaurantOwnerApp';
 
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
@@ -49,6 +50,7 @@ export default function App() {
           <Route path="/apply/restaurant" element={<ApplyRestaurant />} />
           <Route path="/apply/courier" element={<ApplyCourier />} />
           <Route path="/courier-app" element={<PrivateRoute><CourierApp /></PrivateRoute>} />
+          <Route path="/restaurant-owner" element={<PrivateRoute><RestaurantOwnerApp /></PrivateRoute>} />
         </Route>
         {/* Auth */}
         <Route path="/login" element={<Login />} />
