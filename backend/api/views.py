@@ -384,32 +384,41 @@ def update_application(request, pk):
         profile.save()
 
         if new_status == 'approved' and profile.role == 'restaurant_owner':
-            Restaurant.objects.get_or_create(
+            restaurant, created = Restaurant.objects.get_or_create(
                 name=profile.restaurant_name or f"{profile.user.username}'s Restaurant",
                 defaults={
-                    'address': profile.restaurant_address,
-                    'city': profile.city,
-                    'phone': profile.phone,
+                    'address': profile.restaurant_address or '',
+                    'city': profile.city or 'Al Hoceima',
+                    'phone': profile.phone or '',
                     'category': profile.restaurant_category or 'Restaurant',
                     'is_open': True,
                     'rating': 0.0,
                     'description': f"Restaurant by {profile.user.username}",
+                    'image_url': '',
                 }
             )
+            print(f"Restaurant {'created' if created else 'already exists'}: {restaurant.name}")
 
         if new_status == 'approved' and profile.role == 'courier':
-            Courier.objects.get_or_create(
+            courier, created = Courier.objects.get_or_create(
                 user=profile.user,
                 defaults={
-                    'phone': profile.phone,
+                    'phone': profile.phone or '',
                     'is_available': True,
+                    'is_online': False,
+                    'vehicle': profile.vehicle or 'moto',
+                    'deliveries_count': 0,
+                    'earnings_total': 0,
                 }
             )
+            print(f"Courier {'created' if created else 'already exists'}: {courier.user.username}")
 
         return Response({'status': f'Application {new_status}'})
     except UserProfile.DoesNotExist:
         return Response({'error': 'Not found'}, status=404)
-
+    except Exception as e:
+        print(f"Error in update_application: {e}")
+        return Response({'error': str(e)}, status=400)
 
 # ───── COURIER APP ─────
 
