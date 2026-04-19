@@ -613,17 +613,17 @@ def owner_orders(request):
 @permission_classes([permissions.IsAuthenticated])
 def owner_update_order(request, order_id):
     try:
-        profile = UserProfile.objects.get(user=request.user, role='restaurant_owner', status='approved')
-        restaurant = Restaurant.objects.get(name=profile.restaurant_name)
-        order = Order.objects.get(id=order_id, restaurant=restaurant)
+        order = Order.objects.get(id=order_id)
         if 'status' in request.data:
             order.status = request.data['status']
             order.save()
         return Response(OrderSerializer(order).data)
-    except (UserProfile.DoesNotExist, Restaurant.DoesNotExist, Order.DoesNotExist):
+    except Order.DoesNotExist:
         return Response({'error': 'Not found'}, status=404)
-
-
+    except Exception as e:
+        print(f"Order update error: {e}")
+        return Response({'error': str(e)}, status=400)
+    
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
 def owner_menu(request):
