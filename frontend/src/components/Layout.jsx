@@ -36,7 +36,7 @@ export default function Layout() {
         ) : (
           <div style={{ display: 'flex', gap: '6px' }}>
             {user.is_staff && (
-              <Link to="/admin" style={{
+              <Link to="/admin-panel" style={{
                 fontSize: '11px', fontWeight: '700', color: '#f59e0b',
                 background: '#fef9c3', padding: '5px 10px', borderRadius: '8px',
                 textDecoration: 'none',
