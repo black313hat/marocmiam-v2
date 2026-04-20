@@ -1,42 +1,33 @@
 import { useState, useEffect } from 'react';
 import { getOrders } from '../../services/api';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, RefreshCw, Package, Clock, CheckCircle, Truck, XCircle, ChevronDown, ChevronUp } from 'lucide-react';
+import { RefreshCw, ChevronDown, ChevronUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
-
-const STATUS = {
-  pending: { color: '#f59e0b', bg: '#fef9c3', icon: '⏳', label: 'Pending' },
-  confirmed: { color: '#3b82f6', bg: '#dbeafe', icon: '✅', label: 'Confirmed' },
-  preparing: { color: '#8b5cf6', bg: '#f3e8ff', icon: '👨‍🍳', label: 'Preparing' },
-  picked_up: { color: '#06b6d4', bg: '#cffafe', icon: '🛵', label: 'On the way' },
-  delivered: { color: '#10b981', bg: '#dcfce7', icon: '🎉', label: 'Delivered' },
-  cancelled: { color: '#ef4444', bg: '#fee2e2', icon: '❌', label: 'Cancelled' },
-};
+import { useLang } from '../../context/LanguageContext';
 
 const STEPS = ['pending', 'confirmed', 'preparing', 'picked_up', 'delivered'];
 
-function OrderTimeline({ status }) {
+function OrderTimeline({ status, t }) {
   const currentIdx = STEPS.indexOf(status);
   if (status === 'cancelled') return (
     <div style={{ padding: '12px 0', color: '#ef4444', fontSize: '13px', fontWeight: '600' }}>
-      ❌ Order cancelled
+      ❌ {t('cancelled')}
     </div>
   );
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '0', margin: '12px 0' }}>
+    <div style={{ display: 'flex', alignItems: 'center', margin: '12px 0' }}>
       {STEPS.map((step, i) => {
-        const s = STATUS[step];
         const done = i <= currentIdx;
         const active = i === currentIdx;
         return (
           <div key={step} style={{ display: 'flex', alignItems: 'center', flex: i < STEPS.length - 1 ? 1 : 'none' }}>
             <div style={{
               width: '28px', height: '28px', borderRadius: '50%', flexShrink: 0,
-              background: done ? 'var(--primary)' : 'var(--muted)',
+              background: done ? '#FF6B00' : '#f0f0f0',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '12px', fontWeight: '700', color: done ? '#fff' : 'var(--muted-fg)',
-              boxShadow: active ? '0 0 0 4px rgba(0,166,81,0.2)' : 'none',
+              fontSize: '12px', fontWeight: '700', color: done ? '#fff' : '#999',
+              boxShadow: active ? '0 0 0 4px rgba(255,107,0,0.2)' : 'none',
               transition: 'all 0.3s',
             }}>
               {done ? '✓' : i + 1}
@@ -44,7 +35,7 @@ function OrderTimeline({ status }) {
             {i < STEPS.length - 1 && (
               <div style={{
                 flex: 1, height: '2px',
-                background: i < currentIdx ? 'var(--primary)' : 'var(--muted)',
+                background: i < currentIdx ? '#FF6B00' : '#f0f0f0',
                 transition: 'all 0.3s',
               }} />
             )}
@@ -60,10 +51,19 @@ export default function Orders() {
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(null);
   const navigate = useNavigate();
+  const { t, isRTL } = useLang();
+
+  const STATUS = {
+    pending:   { color: '#f59e0b', bg: '#fef9c3', icon: '⏳', label: t('pending') },
+    confirmed: { color: '#3b82f6', bg: '#dbeafe', icon: '✅', label: t('confirmed') },
+    preparing: { color: '#8b5cf6', bg: '#f3e8ff', icon: '👨‍🍳', label: t('preparing') },
+    picked_up: { color: '#06b6d4', bg: '#cffafe', icon: '🛵', label: t('on_the_way') },
+    delivered: { color: '#10b981', bg: '#dcfce7', icon: '🎉', label: t('delivered') },
+    cancelled: { color: '#ef4444', bg: '#fee2e2', icon: '❌', label: t('cancelled') },
+  };
 
   useEffect(() => {
     load();
-    // Auto-refresh every 15 seconds for active orders
     const interval = setInterval(load, 15000);
     return () => clearInterval(interval);
   }, []);
@@ -81,32 +81,34 @@ export default function Orders() {
   }
 
   return (
-    <div style={{ padding: '16px' }}>
+    <div style={{ padding: '16px', direction: isRTL ? 'rtl' : 'ltr' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
-        <h1 style={{ fontSize: '22px', fontWeight: '800' }}>My Orders</h1>
-        <button onClick={load} style={{ background: 'var(--muted)', padding: '8px', borderRadius: '10px' }}>
-          <RefreshCw size={15} color="var(--muted-fg)" />
+        <h1 style={{ fontSize: '22px', fontWeight: '800' }}>{t('my_orders')}</h1>
+        <button onClick={load} style={{
+          background: '#f5f5f5', padding: '8px', borderRadius: '10px',
+          border: 'none', cursor: 'pointer',
+        }}>
+          <RefreshCw size={15} color="#999" />
         </button>
       </div>
 
       {loading ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           {[1, 2, 3].map(i => (
-            <div key={i} style={{ height: '100px', background: 'var(--muted)', borderRadius: '14px' }} />
+            <div key={i} style={{ height: '100px', background: '#fff', borderRadius: '14px' }} />
           ))}
         </div>
       ) : orders.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 16px' }}>
           <div style={{ fontSize: '64px', marginBottom: '16px' }}>📦</div>
-          <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px' }}>No orders yet</h2>
-          <p style={{ color: 'var(--muted-fg)', marginBottom: '20px', fontSize: '14px' }}>
-            Order food from your favourite restaurants
-          </p>
+          <h2 style={{ fontSize: '18px', fontWeight: '700', marginBottom: '8px' }}>{t('no_orders')}</h2>
+          <p style={{ color: '#999', marginBottom: '20px', fontSize: '14px' }}>{t('no_orders_sub')}</p>
           <button onClick={() => navigate('/')} style={{
-            background: 'var(--primary)', color: '#fff',
+            background: '#FF6B00', color: '#fff',
             padding: '12px 28px', borderRadius: '10px', fontWeight: '600',
+            border: 'none', cursor: 'pointer',
           }}>
-            Order Now
+            {t('order_now_btn')}
           </button>
         </div>
       ) : (
@@ -123,12 +125,12 @@ export default function Orders() {
                 transition={{ delay: i * 0.05 }}
                 style={{
                   background: '#fff', borderRadius: '14px',
-                  border: isActive ? `1.5px solid ${s.color}40` : '1px solid var(--border)',
-                  overflow: 'hidden', boxShadow: 'var(--shadow)',
+                  border: isActive ? `1.5px solid ${s.color}40` : '1px solid #f0f0f0',
+                  overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.04)',
                 }}
               >
                 {isActive && (
-                  <div style={{ height: '3px', background: `linear-gradient(90deg, ${s.color}, var(--primary))` }} />
+                  <div style={{ height: '3px', background: `linear-gradient(90deg, ${s.color}, #FF6B00)` }} />
                 )}
                 <div
                   onClick={() => setExpanded(isOpen ? null : order.id)}
@@ -139,7 +141,7 @@ export default function Orders() {
                       <p style={{ fontSize: '14px', fontWeight: '700' }}>
                         {order.restaurant_name || `Order #${order.id}`}
                       </p>
-                      <p style={{ fontSize: '11px', color: 'var(--muted-fg)', marginTop: '2px' }}>
+                      <p style={{ fontSize: '11px', color: '#999', marginTop: '2px' }}>
                         {new Date(order.created_at).toLocaleDateString('fr-MA', {
                           day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
                         })}
@@ -152,22 +154,22 @@ export default function Orders() {
                       }}>
                         {s.icon} {s.label}
                       </span>
-                      {isOpen ? <ChevronUp size={15} color="var(--muted-fg)" /> : <ChevronDown size={15} color="var(--muted-fg)" />}
+                      {isOpen ? <ChevronUp size={15} color="#999" /> : <ChevronDown size={15} color="#999" />}
                     </div>
                   </div>
 
-                  {isActive && <OrderTimeline status={order.status} />}
+                  {isActive && <OrderTimeline status={order.status} t={t} />}
 
                   <div style={{
                     display: 'flex', justifyContent: 'space-between',
                     marginTop: isActive ? '4px' : '10px', paddingTop: '8px',
-                    borderTop: '1px solid var(--border)',
+                    borderTop: '1px solid #f5f5f5',
                   }}>
-                    <span style={{ fontSize: '12px', color: 'var(--muted-fg)' }}>
-                      {order.items?.length || 0} items
+                    <span style={{ fontSize: '12px', color: '#999' }}>
+                      {order.items?.length || 0} {t('items')}
                     </span>
-                    <span style={{ fontWeight: '800', color: 'var(--primary)', fontSize: '14px' }}>
-                      {parseFloat(order.total_price).toFixed(2)} MAD
+                    <span style={{ fontWeight: '800', color: '#FF6B00', fontSize: '14px' }}>
+                      {parseFloat(order.total_price).toFixed(0)} MAD
                     </span>
                   </div>
                 </div>
@@ -180,8 +182,8 @@ export default function Orders() {
                       exit={{ height: 0, opacity: 0 }}
                       style={{ overflow: 'hidden' }}
                     >
-                      <div style={{ padding: '0 16px 16px', borderTop: '1px solid var(--border)' }}>
-                        <p style={{ fontSize: '12px', color: 'var(--muted-fg)', margin: '12px 0 8px' }}>
+                      <div style={{ padding: '0 16px 16px', borderTop: '1px solid #f5f5f5' }}>
+                        <p style={{ fontSize: '12px', color: '#999', margin: '12px 0 8px' }}>
                           📍 {order.delivery_address}
                         </p>
                         {order.items?.map(item => (
@@ -197,26 +199,26 @@ export default function Orders() {
                         ))}
 
                         {/* Fee breakdown */}
-                        <div style={{ borderTop: '1px dashed #e2e8f0', marginTop: '8px', paddingTop: '8px' }}>
+                        <div style={{ borderTop: '1px dashed #f0f0f0', marginTop: '8px', paddingTop: '8px' }}>
                           {order.delivery_fee > 0 && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>
-                              <span>🛵 Livraison {order.distance_km ? `(${parseFloat(order.distance_km).toFixed(1)} km)` : ''}</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#999', marginBottom: '4px' }}>
+                              <span>🛵 {t('delivery')}</span>
                               <span>{parseFloat(order.delivery_fee).toFixed(0)} MAD</span>
                             </div>
                           )}
                           {order.service_fee > 0 && (
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#64748b', marginBottom: '4px' }}>
-                              <span>🛡️ Frais de service</span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#999', marginBottom: '4px' }}>
+                              <span>🛡️ {t('service_fee')}</span>
                               <span>{parseFloat(order.service_fee).toFixed(0)} MAD</span>
                             </div>
                           )}
                           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: '800', marginTop: '6px' }}>
-                            <span>Total</span>
-                            <span style={{ color: '#00A651' }}>{parseFloat(order.total_price).toFixed(0)} MAD</span>
+                            <span>{t('total')}</span>
+                            <span style={{ color: '#FF6B00' }}>{parseFloat(order.total_price).toFixed(0)} MAD</span>
                           </div>
                           {order.payment_method && (
-                            <div style={{ marginTop: '6px', fontSize: '12px', color: '#64748b' }}>
-                              {order.payment_method === 'cash' ? '💵 Paiement en espèces' : '💳 Paiement par carte'}
+                            <div style={{ marginTop: '6px', fontSize: '12px', color: '#999' }}>
+                              {order.payment_method === 'cash' ? `💵 ${t('cash_payment')}` : `💳 ${t('card_payment')}`}
                             </div>
                           )}
                         </div>
@@ -225,12 +227,12 @@ export default function Orders() {
                           onClick={() => navigate('/')}
                           style={{
                             marginTop: '12px', width: '100%', padding: '10px',
-                            borderRadius: '10px', background: 'var(--muted)',
-                            fontSize: '13px', fontWeight: '600', color: 'var(--muted-fg)',
+                            borderRadius: '10px', background: '#f5f5f5',
+                            fontSize: '13px', fontWeight: '600', color: '#666',
                             border: 'none', cursor: 'pointer',
                           }}
                         >
-                          🔄 Reorder
+                          🔄 {t('reorder')}
                         </button>
                       </div>
                     </motion.div>
