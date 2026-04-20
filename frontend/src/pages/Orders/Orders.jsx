@@ -102,8 +102,10 @@ export default function Orders() {
       setOrders(res.data);
       const active = res.data.find(o => !['delivered', 'cancelled'].includes(o.status));
       if (active) setExpanded(active.id);
-    } catch {
-      toast.error('Could not load orders');
+    } catch (err) {
+      if (err.response?.status !== 401) {
+        toast.error('Could not load orders');
+      }
     }
     setLoading(false);
   }
