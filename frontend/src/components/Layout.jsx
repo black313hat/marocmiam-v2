@@ -2,17 +2,20 @@ import { Outlet, Link, useLocation } from 'react-router-dom';
 import { Home, ShoppingBag, User, Search } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
+import { useLang } from '../context/LanguageContext';
 
 export default function Layout() {
   const { itemCount } = useCart();
   const { user } = useAuth();
   const location = useLocation();
 
+  const { lang, changeLang, t, isRTL } = useLang();
+
   const navItems = [
-    { path: '/', icon: Home, label: 'Accueil' },
-    { path: '/restaurants', icon: Search, label: 'Commander' },
-    { path: '/cart', icon: ShoppingBag, label: 'Panier', badge: itemCount },
-    { path: '/profile', icon: User, label: user ? (user.first_name || user.username) : 'Profil' },
+    { path: '/', icon: Home, label: t('home') },
+    { path: '/restaurants', icon: Search, label: t('order') },
+    { path: '/cart', icon: ShoppingBag, label: t('cart'), badge: itemCount },
+    { path: '/profile', icon: User, label: t('profile') },
   ];
 
   return (
@@ -29,6 +32,24 @@ export default function Layout() {
         <Link to="/" style={{ fontSize: '20px', fontWeight: '900', color: '#FF6B00', letterSpacing: '-0.5px' }}>
           MarocMiam 🍴
         </Link>
+        {/* Language switcher */}
+        <div style={{ display: 'flex', gap: '2px', background: '#f5f5f5', borderRadius: '20px', padding: '3px' }}>
+          {['fr', 'ar', 'en'].map(l => (
+            <button
+              key={l}
+              onClick={() => changeLang(l)}
+              style={{
+                padding: '4px 10px', borderRadius: '16px', fontSize: '11px',
+                fontWeight: '700', cursor: 'pointer', border: 'none',
+                background: lang === l ? '#FF6B00' : 'transparent',
+                color: lang === l ? '#fff' : '#999',
+                transition: 'all 0.2s',
+              }}
+            >
+              {l === 'fr' ? 'FR' : l === 'ar' ? 'ع' : 'EN'}
+            </button>
+          ))}
+        </div>
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           {user?.is_staff && (
             <Link to="/admin-panel" style={{

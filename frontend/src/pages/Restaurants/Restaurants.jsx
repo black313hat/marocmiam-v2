@@ -1,18 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getRestaurants } from '../../services/api';
-import { Search, Star, Clock, Heart, ArrowLeft, Bike } from 'lucide-react';
+import { Search, Star, Clock, Heart, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
-
-const CATEGORIES = [
-  { key: 'all', label: 'Tous', emoji: '🍴' },
-  { key: 'Restaurant', label: 'Restos', emoji: '🍽️' },
-  { key: 'Fast Food', label: 'Fast Food', emoji: '🍟' },
-  { key: 'Café', label: 'Cafés', emoji: '☕' },
-  { key: 'Barbecue', label: 'Grills', emoji: '🔥' },
-  { key: 'Supermarket', label: 'Marché', emoji: '🛒' },
-];
+import { useLang } from '../../context/LanguageContext';
 
 function getFavs() {
   try { return JSON.parse(localStorage.getItem('fav_restaurants') || '[]'); } catch { return []; }
@@ -31,6 +23,16 @@ export default function Restaurants() {
   const [search, setSearch] = useState('');
   const [favorites, setFavorites] = useState(getFavs());
   const navigate = useNavigate();
+  const { t, isRTL } = useLang();
+
+  const CATEGORIES = [
+    { key: 'all', label: t('all'), emoji: '🍴' },
+    { key: 'Restaurant', label: t('restos'), emoji: '🍽️' },
+    { key: 'Fast Food', label: t('fast_food'), emoji: '🍟' },
+    { key: 'Café', label: t('cafes'), emoji: '☕' },
+    { key: 'Barbecue', label: t('grills'), emoji: '🔥' },
+    { key: 'Supermarket', label: t('market'), emoji: '🛒' },
+  ];
 
   useEffect(() => {
     getRestaurants()
@@ -49,7 +51,7 @@ export default function Restaurants() {
   const topRated = [...restaurants].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 5);
 
   return (
-    <div style={{ background: '#f5f5f5', minHeight: '100vh', paddingBottom: '80px' }}>
+    <div style={{ background: '#f5f5f5', minHeight: '100vh', paddingBottom: '80px', direction: isRTL ? 'rtl' : 'ltr' }}>
 
       {/* Orange header */}
       <div style={{ background: '#FF6B00', padding: '16px 16px 20px' }}>
@@ -61,7 +63,7 @@ export default function Restaurants() {
           }}>
             <ArrowLeft size={18} color="#fff" />
           </button>
-          <h1 style={{ color: '#fff', fontSize: '18px', fontWeight: '800' }}>Restaurants</h1>
+          <h1 style={{ color: '#fff', fontSize: '18px', fontWeight: '800' }}>{t('restaurants')}</h1>
         </div>
 
         <div style={{
@@ -70,7 +72,7 @@ export default function Restaurants() {
         }}>
           <Search size={16} color="#aaa" />
           <input
-            placeholder="Rechercher un restaurant..."
+            placeholder={t('search_restaurant')}
             value={search}
             onChange={e => setSearch(e.target.value)}
             style={{ flex: 1, fontSize: '14px', background: 'none', color: '#1a1a1a' }}
@@ -86,7 +88,7 @@ export default function Restaurants() {
               display: 'flex', alignItems: 'center', gap: '5px',
               padding: '7px 14px', borderRadius: '20px', fontSize: '12px',
               fontWeight: '600', whiteSpace: 'nowrap', flexShrink: 0,
-              cursor: 'pointer', transition: 'all 0.2s',
+              cursor: 'pointer',
               background: category === cat.key ? '#FF6B00' : '#f5f5f5',
               color: category === cat.key ? '#fff' : '#666',
               border: 'none',
@@ -110,8 +112,8 @@ export default function Restaurants() {
             {!search && category === 'all' && topRated.length > 0 && (
               <div style={{ marginBottom: '20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
-                  <h2 style={{ fontSize: '16px', fontWeight: '800' }}>⭐ Les mieux notés</h2>
-                  <span style={{ fontSize: '12px', color: '#FF6B00', fontWeight: '600' }}>Voir tout</span>
+                  <h2 style={{ fontSize: '16px', fontWeight: '800' }}>⭐ {t('top_rated')}</h2>
+                  <span style={{ fontSize: '12px', color: '#FF6B00', fontWeight: '600' }}>{t('see_all')}</span>
                 </div>
                 <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', marginLeft: '-16px', paddingLeft: '16px', paddingRight: '16px', paddingBottom: '4px' }}>
                   {topRated.map(r => (
@@ -143,10 +145,10 @@ export default function Restaurants() {
               </div>
             )}
 
-            {/* All restaurants grid */}
+            {/* All restaurants */}
             <div>
               <h2 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '12px' }}>
-                {category === 'all' ? '🍴 Tous les restaurants' : CATEGORIES.find(c => c.key === category)?.label}
+                🍴 {t('all_restaurants')}
                 <span style={{ fontSize: '12px', fontWeight: '400', color: '#999', marginLeft: '6px' }}>
                   ({filtered.length})
                 </span>
@@ -155,7 +157,7 @@ export default function Restaurants() {
               {filtered.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '40px', background: '#fff', borderRadius: '16px' }}>
                   <div style={{ fontSize: '48px', marginBottom: '12px' }}>🍽️</div>
-                  <p style={{ fontWeight: '700', color: '#1a1a1a' }}>Aucun restaurant trouvé</p>
+                  <p style={{ fontWeight: '700', color: '#1a1a1a' }}>{t('no_restaurant')}</p>
                 </div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -200,7 +202,7 @@ export default function Restaurants() {
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                           }}>
                             <span style={{ color: '#fff', fontWeight: '700', fontSize: '12px', background: 'rgba(0,0,0,0.6)', padding: '4px 10px', borderRadius: '8px' }}>
-                              Fermé
+                              {t('closed')}
                             </span>
                           </div>
                         )}
