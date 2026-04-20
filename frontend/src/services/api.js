@@ -21,16 +21,21 @@ API.interceptors.response.use(
       const refresh = localStorage.getItem('refresh_token');
       if (refresh) {
         try {
-          const res = await axios.post(`${import.meta.env.VITE_API_URL}/auth/refresh/`, { refresh });
+          const base = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+          const res = await axios.post(`${base}/auth/refresh/`, { refresh });
           localStorage.setItem('access_token', res.data.access);
           original.headers.Authorization = `Bearer ${res.data.access}`;
           return API(original);
         } catch {
-          localStorage.clear();
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('user');
           window.location.href = '/login';
         }
       } else {
-        localStorage.clear();
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('user');
         window.location.href = '/login';
       }
     }

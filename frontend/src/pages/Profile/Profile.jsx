@@ -2,41 +2,43 @@ import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
+import { useLang } from '../../context/LanguageContext';
 import { User, LogOut, ShoppingBag, Store, Bike, Shield, ChevronRight, Settings } from 'lucide-react';
 import toast from 'react-hot-toast';
 
 export default function Profile() {
   const { user, logout } = useAuth();
   const { itemCount } = useCart();
+  const { t } = useLang();
   const navigate = useNavigate();
 
   if (!user) return (
     <div style={{ padding: '40px 16px', textAlign: 'center' }}>
       <div style={{ fontSize: '64px', marginBottom: '16px' }}>👤</div>
-      <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '8px' }}>Not logged in</h2>
+      <h2 style={{ fontSize: '20px', fontWeight: '700', marginBottom: '8px' }}>{t('not_logged_in')}</h2>
       <p style={{ color: 'var(--muted-fg)', marginBottom: '24px', fontSize: '14px' }}>
-        Login to view your profile and orders
+        {t('not_logged_in_sub')}
       </p>
       <button onClick={() => navigate('/login')} style={{
         background: 'var(--primary)', color: '#fff', padding: '12px 32px',
         borderRadius: '12px', fontWeight: '700', fontSize: '15px',
       }}>
-        Login / Register
+        {t('login_register')}
       </button>
     </div>
   );
 
   const handleLogout = () => {
     logout();
-    toast.success('Logged out successfully');
+    toast.success(t('logged_out'));
     navigate('/');
   };
 
   const menuItems = [
-    { icon: ShoppingBag, label: 'My Orders', sub: 'View order history', path: '/orders', color: '#3b82f6' },
-    { icon: Store, label: 'Restaurant Dashboard', sub: 'Manage your restaurant', path: '/restaurant-owner', color: '#8b5cf6' },
-    { icon: Bike, label: 'Courier Dashboard', sub: 'Manage deliveries', path: '/courier-app', color: '#06b6d4' },
-    ...(user.is_staff ? [{ icon: Shield, label: 'Admin Panel', sub: 'Full platform control', path: '/admin-panel', color: '#f59e0b' }] : []),
+    { icon: ShoppingBag, label: t('my_orders'), sub: t('my_orders_sub'), path: '/orders', color: '#3b82f6' },
+    { icon: Store, label: t('restaurant_dashboard'), sub: t('restaurant_dashboard_sub'), path: '/restaurant-owner', color: '#8b5cf6' },
+    { icon: Bike, label: t('courier_dashboard'), sub: t('courier_dashboard_sub'), path: '/courier-app', color: '#06b6d4' },
+    ...(user.is_staff ? [{ icon: Shield, label: t('admin_panel'), sub: t('admin_panel_sub'), path: '/admin-panel', color: '#f59e0b' }] : []),
   ];
 
   return (
@@ -83,8 +85,8 @@ export default function Profile() {
         gap: '12px', padding: '16px',
       }}>
         {[
-          { label: 'Cart Items', value: itemCount, icon: '🛒' },
-          { label: 'Account', value: user.is_staff ? 'Admin' : 'Customer', icon: '👤' },
+          { label: t('cart_items'), value: itemCount, icon: '🛒' },
+          { label: t('account'), value: user.is_staff ? t('admin') : t('customer'), icon: '👤' },
         ].map((s, i) => (
           <div key={i} style={{
             background: '#fff', borderRadius: '14px', padding: '16px',
@@ -137,8 +139,8 @@ export default function Profile() {
             <LogOut size={18} color="#dc2626" />
           </div>
           <div style={{ flex: 1, textAlign: 'left' }}>
-            <p style={{ fontSize: '14px', fontWeight: '700', color: '#dc2626' }}>Logout</p>
-            <p style={{ fontSize: '12px', color: 'var(--muted-fg)', marginTop: '1px' }}>Sign out of your account</p>
+            <p style={{ fontSize: '14px', fontWeight: '700', color: '#dc2626' }}>{t('logout')}</p>
+            <p style={{ fontSize: '12px', color: 'var(--muted-fg)', marginTop: '1px' }}>{t('logout_sub')}</p>
           </div>
           <ChevronRight size={16} color="#dc2626" />
         </button>

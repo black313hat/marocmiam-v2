@@ -74,9 +74,21 @@ export const translations = {
 
     // Profile
     my_profile: 'Mon profil',
+    not_logged_in: 'Non connecté',
+    not_logged_in_sub: 'Connectez-vous pour voir votre profil et vos commandes',
+    login_register: 'Se connecter / S\'inscrire',
+    cart_items: 'Panier',
+    account: 'Compte',
+    customer: 'Client',
+    my_orders_sub: 'Voir l\'historique des commandes',
     restaurant_dashboard: 'Dashboard restaurant',
+    restaurant_dashboard_sub: 'Gérer votre restaurant',
     courier_dashboard: 'Dashboard livreur',
+    courier_dashboard_sub: 'Gérer les livraisons',
     admin_panel: 'Panneau admin',
+    admin_panel_sub: 'Contrôle complet de la plateforme',
+    logout_sub: 'Se déconnecter de votre compte',
+    logged_out: 'Déconnecté avec succès',
     settings: 'Paramètres',
 
     // Cart
@@ -174,9 +186,21 @@ export const translations = {
 
     // Profile
     my_profile: 'ملفي الشخصي',
+    not_logged_in: 'غير مسجل الدخول',
+    not_logged_in_sub: 'سجل الدخول لعرض ملفك الشخصي وطلباتك',
+    login_register: 'تسجيل الدخول / التسجيل',
+    cart_items: 'السلة',
+    account: 'الحساب',
+    customer: 'عميل',
+    my_orders_sub: 'عرض سجل الطلبات',
     restaurant_dashboard: 'لوحة المطعم',
+    restaurant_dashboard_sub: 'إدارة مطعمك',
     courier_dashboard: 'لوحة التوصيل',
+    courier_dashboard_sub: 'إدارة التوصيلات',
     admin_panel: 'لوحة الإدارة',
+    admin_panel_sub: 'تحكم كامل بالمنصة',
+    logout_sub: 'تسجيل الخروج من حسابك',
+    logged_out: 'تم تسجيل الخروج بنجاح',
     settings: 'الإعدادات',
 
     // Cart
@@ -274,9 +298,21 @@ export const translations = {
 
     // Profile
     my_profile: 'My profile',
+    not_logged_in: 'Not logged in',
+    not_logged_in_sub: 'Login to view your profile and orders',
+    login_register: 'Login / Register',
+    cart_items: 'Cart',
+    account: 'Account',
+    customer: 'Customer',
+    my_orders_sub: 'View order history',
     restaurant_dashboard: 'Restaurant dashboard',
+    restaurant_dashboard_sub: 'Manage your restaurant',
     courier_dashboard: 'Courier dashboard',
+    courier_dashboard_sub: 'Manage deliveries',
     admin_panel: 'Admin panel',
+    admin_panel_sub: 'Full platform control',
+    logout_sub: 'Sign out of your account',
+    logged_out: 'Logged out successfully',
     settings: 'Settings',
 
     // Cart
