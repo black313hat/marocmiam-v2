@@ -1,65 +1,80 @@
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { useLang } from '../../context/LanguageContext';
 import { Plus, Minus, Trash2, ArrowLeft } from 'lucide-react';
 
 export default function Cart() {
-  const { cart, updateQuantity, removeItem, total, clearCart } = useCart();
+  const { cart, updateQuantity, removeItem, total } = useCart();
   const navigate = useNavigate();
+  const { t, isRTL } = useLang();
 
   if (cart.length === 0) return (
-    <div style={{ textAlign: 'center', padding: '80px 16px' }}>
+    <div style={{ textAlign: 'center', padding: '80px 16px', direction: isRTL ? 'rtl' : 'ltr' }}>
       <div style={{ fontSize: '64px', marginBottom: '16px' }}>🛒</div>
-      <h2 style={{ fontSize: '22px', fontWeight: '700', marginBottom: '8px' }}>Your cart is empty</h2>
-      <p style={{ color: 'var(--text-light)', marginBottom: '24px' }}>Add some items to get started</p>
+      <h2 style={{ fontSize: '22px', fontWeight: '700', marginBottom: '8px' }}>{t('empty_cart')}</h2>
+      <p style={{ color: '#999', marginBottom: '24px' }}>{t('empty_cart_sub')}</p>
       <button onClick={() => navigate('/')} style={{
-        background: 'var(--teal)', color: '#fff', padding: '12px 28px',
+        background: '#FF6B00', color: '#fff', padding: '12px 28px',
         borderRadius: '10px', fontWeight: '600', fontSize: '15px',
+        border: 'none', cursor: 'pointer',
       }}>
-        Browse Restaurants
+        {t('order_now_btn')}
       </button>
     </div>
   );
 
   return (
-    <div style={{ maxWidth: '600px', margin: '0 auto', padding: '24px 16px' }}>
-      <button onClick={() => navigate(-1)} style={{
-        display: 'flex', alignItems: 'center', gap: '6px',
-        background: 'none', color: 'var(--text-light)', marginBottom: '20px',
-      }}>
-        <ArrowLeft size={18} /> Back
-      </button>
+    <div style={{ padding: '16px', paddingBottom: '80px', direction: isRTL ? 'rtl' : 'ltr' }}>
+      {/* Header */}
+      <div style={{ background: '#FF6B00', margin: '-16px -16px 20px', padding: '16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <button onClick={() => navigate(-1)} style={{
+            width: '36px', height: '36px', borderRadius: '50%',
+            background: 'rgba(255,255,255,0.2)', border: 'none',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer',
+          }}>
+            <ArrowLeft size={18} color="#fff" />
+          </button>
+          <h1 style={{ color: '#fff', fontSize: '18px', fontWeight: '800' }}>{t('my_cart')}</h1>
+        </div>
+      </div>
 
-      <h1 style={{ fontSize: '26px', fontWeight: '800', marginBottom: '24px' }}>Your Cart</h1>
-
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '24px' }}>
+      {/* Items */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
         {cart.map(item => (
           <div key={item.id} style={{
-            background: '#fff', borderRadius: '12px', padding: '16px',
+            background: '#fff', borderRadius: '14px', padding: '14px 16px',
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            boxShadow: 'var(--shadow)',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
           }}>
-            <div>
-              <h3 style={{ fontSize: '16px', fontWeight: '600' }}>{item.name}</h3>
-              <p style={{ color: 'var(--teal)', fontWeight: '700', marginTop: '4px' }}>
-                {(item.price * item.quantity).toFixed(2)} MAD
+            <div style={{ flex: 1 }}>
+              <h3 style={{ fontSize: '14px', fontWeight: '700', color: '#1a1a1a' }}>{item.name}</h3>
+              <p style={{ color: '#FF6B00', fontWeight: '800', marginTop: '4px', fontSize: '14px' }}>
+                {(item.price * item.quantity).toFixed(0)} MAD
               </p>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <button onClick={() => updateQuantity(item.id, item.quantity - 1)} style={{
-                width: '30px', height: '30px', borderRadius: '50%', background: 'var(--gray)',
+                width: '30px', height: '30px', borderRadius: '50%',
+                background: '#f5f5f5', border: 'none', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
-                <Minus size={13} />
+                <Minus size={13} color="#666" />
               </button>
-              <span style={{ fontWeight: '700', minWidth: '20px', textAlign: 'center' }}>{item.quantity}</span>
+              <span style={{ fontWeight: '800', minWidth: '20px', textAlign: 'center', fontSize: '15px' }}>
+                {item.quantity}
+              </span>
               <button onClick={() => updateQuantity(item.id, item.quantity + 1)} style={{
-                width: '30px', height: '30px', borderRadius: '50%', background: 'var(--teal)',
+                width: '30px', height: '30px', borderRadius: '50%',
+                background: '#FF6B00', border: 'none', cursor: 'pointer',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
               }}>
                 <Plus size={13} color="#fff" />
               </button>
-              <button onClick={() => removeItem(item.id)} style={{ background: 'none', color: '#ef4444', marginLeft: '4px' }}>
-                <Trash2 size={18} />
+              <button onClick={() => removeItem(item.id)} style={{
+                background: 'none', border: 'none', cursor: 'pointer', marginLeft: '4px',
+              }}>
+                <Trash2 size={18} color="#ef4444" />
               </button>
             </div>
           </div>
@@ -67,24 +82,30 @@ export default function Cart() {
       </div>
 
       {/* Summary */}
-      <div style={{ background: '#fff', borderRadius: '12px', padding: '20px', boxShadow: 'var(--shadow)' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-          <span style={{ color: 'var(--text-light)' }}>Subtotal</span>
-          <span>{total.toFixed(2)} MAD</span>
+      <div style={{ background: '#fff', borderRadius: '16px', padding: '20px', boxShadow: '0 2px 8px rgba(0,0,0,0.06)' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px', fontSize: '14px' }}>
+          <span style={{ color: '#999' }}>{t('subtotal')}</span>
+          <span style={{ fontWeight: '600' }}>{total.toFixed(0)} MAD</span>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-          <span style={{ color: 'var(--text-light)' }}>Delivery</span>
-          <span style={{ color: 'green' }}>Free</span>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', fontSize: '14px' }}>
+          <span style={{ color: '#999' }}>{t('delivery')}</span>
+          <span style={{ color: '#22c55e', fontWeight: '600' }}>{t('free_delivery')}</span>
         </div>
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: '800', marginBottom: '20px' }}>
-          <span>Total</span>
-          <span style={{ color: 'var(--teal)' }}>{total.toFixed(2)} MAD</span>
+        <div style={{
+          display: 'flex', justifyContent: 'space-between',
+          fontSize: '18px', fontWeight: '800', marginBottom: '20px',
+          paddingTop: '12px', borderTop: '1px solid #f0f0f0',
+        }}>
+          <span>{t('total')}</span>
+          <span style={{ color: '#FF6B00' }}>{total.toFixed(0)} MAD</span>
         </div>
         <button onClick={() => navigate('/checkout')} style={{
-          width: '100%', padding: '14px', borderRadius: '10px',
-          background: 'var(--teal)', color: '#fff', fontSize: '16px', fontWeight: '700',
+          width: '100%', padding: '14px', borderRadius: '12px',
+          background: '#FF6B00', color: '#fff', fontSize: '16px', fontWeight: '700',
+          border: 'none', cursor: 'pointer',
+          boxShadow: '0 4px 16px rgba(255,107,0,0.3)',
         }}>
-          Proceed to Checkout
+          {t('checkout')} →
         </button>
       </div>
     </div>
