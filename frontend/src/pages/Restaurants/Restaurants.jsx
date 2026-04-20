@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getRestaurants } from '../../services/api';
-import { Search, Star, Clock, Heart, ArrowLeft } from 'lucide-react';
+import { Search, Star, Clock, Heart, ArrowLeft, ChevronRight } from 'lucide-react';
 import { motion } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useLang } from '../../context/LanguageContext';
@@ -16,6 +16,15 @@ function toggleFav(id) {
   window.dispatchEvent(new Event('favs-updated'));
 }
 
+const CATEGORY_COLORS = {
+  all: { bg: '#FFF3E8', color: '#FF6B00', emoji: '🍴' },
+  Restaurant: { bg: '#FFF3E8', color: '#FF6B00', emoji: '🍽️' },
+  'Fast Food': { bg: '#FFF9E6', color: '#F59E0B', emoji: '🍟' },
+  Café: { bg: '#F0FDF4', color: '#16A34A', emoji: '☕' },
+  Barbecue: { bg: '#FEF2F2', color: '#EF4444', emoji: '🔥' },
+  Supermarket: { bg: '#EFF6FF', color: '#3B82F6', emoji: '🛒' },
+};
+
 export default function Restaurants() {
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -26,12 +35,12 @@ export default function Restaurants() {
   const { t, isRTL } = useLang();
 
   const CATEGORIES = [
-    { key: 'all', label: t('all'), emoji: '🍴' },
-    { key: 'Restaurant', label: t('restos'), emoji: '🍽️' },
-    { key: 'Fast Food', label: t('fast_food'), emoji: '🍟' },
-    { key: 'Café', label: t('cafes'), emoji: '☕' },
-    { key: 'Barbecue', label: t('grills'), emoji: '🔥' },
-    { key: 'Supermarket', label: t('market'), emoji: '🛒' },
+    { key: 'all', label: t('all') },
+    { key: 'Restaurant', label: t('restos') },
+    { key: 'Fast Food', label: t('fast_food') },
+    { key: 'Café', label: t('cafes') },
+    { key: 'Barbecue', label: t('grills') },
+    { key: 'Supermarket', label: t('market') },
   ];
 
   useEffect(() => {
@@ -47,13 +56,12 @@ export default function Restaurants() {
   let filtered = restaurants;
   if (category !== 'all') filtered = filtered.filter(r => r.category === category);
   if (search) filtered = filtered.filter(r => r.name.toLowerCase().includes(search.toLowerCase()));
-
   const topRated = [...restaurants].sort((a, b) => (b.rating || 0) - (a.rating || 0)).slice(0, 5);
 
   return (
     <div style={{ background: '#f5f5f5', minHeight: '100vh', paddingBottom: '80px', direction: isRTL ? 'rtl' : 'ltr' }}>
 
-      {/* Orange header */}
+      {/* Header */}
       <div style={{ background: '#FF6B00', padding: '16px 16px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
           <button onClick={() => navigate('/')} style={{
@@ -65,7 +73,6 @@ export default function Restaurants() {
           </button>
           <h1 style={{ color: '#fff', fontSize: '18px', fontWeight: '800' }}>{t('restaurants')}</h1>
         </div>
-
         <div style={{
           display: 'flex', alignItems: 'center', gap: '10px',
           background: '#fff', borderRadius: '12px', padding: '11px 14px',
@@ -80,22 +87,70 @@ export default function Restaurants() {
         </div>
       </div>
 
-      {/* Category tabs */}
-      <div style={{ background: '#fff', padding: '12px 16px', borderBottom: '1px solid #f0f0f0' }}>
-        <div style={{ display: 'flex', gap: '8px', overflowX: 'auto' }}>
-          {CATEGORIES.map(cat => (
-            <button key={cat.key} onClick={() => setCategory(cat.key)} style={{
-              display: 'flex', alignItems: 'center', gap: '5px',
-              padding: '7px 14px', borderRadius: '20px', fontSize: '12px',
-              fontWeight: '600', whiteSpace: 'nowrap', flexShrink: 0,
-              cursor: 'pointer',
-              background: category === cat.key ? '#FF6B00' : '#f5f5f5',
-              color: category === cat.key ? '#fff' : '#666',
-              border: 'none',
-            }}>
-              {cat.emoji} {cat.label}
-            </button>
-          ))}
+      {/* Promo banner */}
+      {!search && (
+        <div style={{ padding: '16px 16px 0' }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #FF6B00, #FF9A3C)',
+            borderRadius: '16px', padding: '16px 20px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            position: 'relative', overflow: 'hidden',
+          }}>
+            <div style={{ position: 'absolute', right: '-20px', top: '-20px', width: '120px', height: '120px', borderRadius: '50%', background: 'rgba(255,255,255,0.08)' }} />
+            <div style={{ position: 'relative', zIndex: 1 }}>
+              <div style={{
+                background: '#fff', color: '#FF6B00', fontSize: '10px', fontWeight: '800',
+                padding: '3px 10px', borderRadius: '20px', display: 'inline-block', marginBottom: '6px',
+              }}>
+                OFFRE DU JOUR
+              </div>
+              <p style={{ color: '#fff', fontSize: '20px', fontWeight: '900', lineHeight: 1.1 }}>
+                Livraison<br />GRATUITE 🎉
+              </p>
+              <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '11px', marginTop: '4px' }}>
+                Sur votre première commande
+              </p>
+            </div>
+            <div style={{ fontSize: '64px', opacity: 0.9, position: 'relative', zIndex: 1 }}>🛵</div>
+          </div>
+        </div>
+      )}
+
+      {/* Category icons */}
+      <div style={{ padding: '16px 16px 0' }}>
+        <div style={{ display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '4px' }}>
+          {CATEGORIES.map(cat => {
+            const c = CATEGORY_COLORS[cat.key] || CATEGORY_COLORS.all;
+            const active = category === cat.key;
+            return (
+              <button
+                key={cat.key}
+                onClick={() => setCategory(cat.key)}
+                style={{
+                  display: 'flex', flexDirection: 'column', alignItems: 'center',
+                  gap: '6px', flexShrink: 0, background: 'none', border: 'none', cursor: 'pointer',
+                }}
+              >
+                <div style={{
+                  width: '56px', height: '56px', borderRadius: '16px',
+                  background: active ? c.color : c.bg,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '26px', transition: 'all 0.2s',
+                  boxShadow: active ? `0 4px 12px ${c.color}40` : 'none',
+                  border: active ? 'none' : `1.5px solid ${c.bg}`,
+                }}>
+                  {c.emoji}
+                </div>
+                <span style={{
+                  fontSize: '10px', fontWeight: '600',
+                  color: active ? c.color : '#999',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {cat.label}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -108,12 +163,14 @@ export default function Restaurants() {
           </div>
         ) : (
           <>
-            {/* Top rated */}
+            {/* Top rated horizontal */}
             {!search && category === 'all' && topRated.length > 0 && (
               <div style={{ marginBottom: '20px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
                   <h2 style={{ fontSize: '16px', fontWeight: '800' }}>⭐ {t('top_rated')}</h2>
-                  <span style={{ fontSize: '12px', color: '#FF6B00', fontWeight: '600' }}>{t('see_all')}</span>
+                  <span style={{ fontSize: '12px', color: '#FF6B00', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                    {t('see_all')} <ChevronRight size={14} />
+                  </span>
                 </div>
                 <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', marginLeft: '-16px', paddingLeft: '16px', paddingRight: '16px', paddingBottom: '4px' }}>
                   {topRated.map(r => (
@@ -145,19 +202,16 @@ export default function Restaurants() {
               </div>
             )}
 
-            {/* All restaurants */}
+            {/* Grid */}
             <div>
               <h2 style={{ fontSize: '16px', fontWeight: '800', marginBottom: '12px' }}>
                 🍴 {t('all_restaurants')}
-                <span style={{ fontSize: '12px', fontWeight: '400', color: '#999', marginLeft: '6px' }}>
-                  ({filtered.length})
-                </span>
+                <span style={{ fontSize: '12px', fontWeight: '400', color: '#999', marginLeft: '6px' }}>({filtered.length})</span>
               </h2>
-
               {filtered.length === 0 ? (
                 <div style={{ textAlign: 'center', padding: '40px', background: '#fff', borderRadius: '16px' }}>
                   <div style={{ fontSize: '48px', marginBottom: '12px' }}>🍽️</div>
-                  <p style={{ fontWeight: '700', color: '#1a1a1a' }}>{t('no_restaurant')}</p>
+                  <p style={{ fontWeight: '700' }}>{t('no_restaurant')}</p>
                 </div>
               ) : (
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -197,10 +251,7 @@ export default function Restaurants() {
                           />
                         </button>
                         {!r.is_open && (
-                          <div style={{
-                            position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          }}>
+                          <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                             <span style={{ color: '#fff', fontWeight: '700', fontSize: '12px', background: 'rgba(0,0,0,0.6)', padding: '4px 10px', borderRadius: '8px' }}>
                               {t('closed')}
                             </span>
@@ -208,10 +259,17 @@ export default function Restaurants() {
                         )}
                       </div>
                       <div style={{ padding: '10px' }}>
-                        <h3 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '3px', color: '#1a1a1a' }}>
-                          {r.name}
-                        </h3>
-                        <p style={{ fontSize: '11px', color: '#999', marginBottom: '6px' }}>{r.category}</p>
+                        <h3 style={{ fontSize: '13px', fontWeight: '700', marginBottom: '3px', color: '#1a1a1a' }}>{r.name}</h3>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '6px' }}>
+                          {(() => {
+                            const c = CATEGORY_COLORS[r.category] || CATEGORY_COLORS.all;
+                            return (
+                              <span style={{ fontSize: '10px', fontWeight: '600', color: c.color, background: c.bg, padding: '2px 7px', borderRadius: '6px' }}>
+                                {r.category}
+                              </span>
+                            );
+                          })()}
+                        </div>
                         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                           <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px' }}>
                             <Star size={11} fill="#FF6B00" color="#FF6B00" />
