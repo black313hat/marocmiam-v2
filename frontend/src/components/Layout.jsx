@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Home, ShoppingBag, User, Search } from 'lucide-react';
+import { Home, ShoppingBag, User, Grid } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useLang } from '../context/LanguageContext';
@@ -8,66 +8,51 @@ export default function Layout() {
   const { itemCount } = useCart();
   const { user } = useAuth();
   const location = useLocation();
-
-  const { lang, changeLang, t, isRTL } = useLang();
+  const { lang, changeLang, t } = useLang();
 
   const navItems = [
     { path: '/', icon: Home, label: t('home') },
-    { path: '/restaurants', icon: Search, label: t('order') },
+    { path: '/restaurants', icon: Grid, label: t('order') },
     { path: '/cart', icon: ShoppingBag, label: t('cart'), badge: itemCount },
     { path: '/profile', icon: User, label: t('profile') },
   ];
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f5f5f5', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', background: '#f8f8f8', display: 'flex', flexDirection: 'column', maxWidth: '480px', margin: '0 auto' }}>
 
       {/* Top bar */}
       <div style={{
-        padding: '10px 16px', background: '#fff',
-        borderBottom: '1px solid #f0f0f0',
+        padding: '12px 16px',
+        background: '#fff',
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         position: 'sticky', top: 0, zIndex: 40,
-        maxWidth: '480px', margin: '0 auto', width: '100%',
+        borderBottom: '1px solid #f0f0f0',
       }}>
-        <Link to="/" style={{ fontSize: '20px', fontWeight: '900', color: '#FF6B00', letterSpacing: '-0.5px' }}>
-          MarocMiam 🍴
+        <Link to="/" style={{ fontSize: '22px', fontWeight: '900', color: '#1a1a1a', letterSpacing: '-0.5px' }}>
+          MarocMiam
         </Link>
-        {/* Language switcher */}
-        <div style={{ display: 'flex', gap: '2px', background: '#f5f5f5', borderRadius: '20px', padding: '3px' }}>
-          {['fr', 'ar', 'en'].map(l => (
-            <button
-              key={l}
-              onClick={() => changeLang(l)}
-              style={{
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {/* Language switcher */}
+          <div style={{ display: 'flex', gap: '2px', background: '#f5f5f5', borderRadius: '20px', padding: '3px' }}>
+            {['fr', 'ar', 'en'].map(l => (
+              <button key={l} onClick={() => changeLang(l)} style={{
                 padding: '4px 10px', borderRadius: '16px', fontSize: '11px',
-                fontWeight: '700', cursor: 'pointer', border: 'none',
+                fontWeight: '700', cursor: 'pointer',
                 background: lang === l ? '#FF6B00' : 'transparent',
                 color: lang === l ? '#fff' : '#999',
-                transition: 'all 0.2s',
-              }}
-            >
-              {l === 'fr' ? 'FR' : l === 'ar' ? 'ع' : 'EN'}
-            </button>
-          ))}
-        </div>
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          {user?.is_staff && (
-            <Link to="/admin-panel" style={{
-              fontSize: '11px', fontWeight: '700', color: '#FF6B00',
-              background: '#FFF3E8', padding: '5px 10px',
-              borderRadius: '8px',
-              border: '1px solid #FFE0C0',
-            }}>
-              ⚙️ Admin
-            </Link>
-          )}
+              }}>
+                {l === 'fr' ? 'FR' : l === 'ar' ? 'ع' : 'EN'}
+              </button>
+            ))}
+          </div>
+
           {!user ? (
             <Link to="/login" style={{
               fontSize: '13px', fontWeight: '700', color: '#fff',
-              background: '#FF6B00', padding: '7px 18px',
-              borderRadius: '20px',
+              background: '#FF6B00', padding: '7px 18px', borderRadius: '20px',
             }}>
-              Login
+              {t('login')}
             </Link>
           ) : (
             <Link to="/profile" style={{
@@ -76,14 +61,14 @@ export default function Layout() {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontWeight: '800', fontSize: '14px',
             }}>
-              {user.first_name ? user.first_name[0].toUpperCase() : user.username[0].toUpperCase()}
+              {(user.first_name || user.username)[0].toUpperCase()}
             </Link>
           )}
         </div>
       </div>
 
       {/* Main */}
-      <main style={{ flex: 1, paddingBottom: '80px', maxWidth: '480px', margin: '0 auto', width: '100%' }}>
+      <main style={{ flex: 1, paddingBottom: '80px' }}>
         <Outlet />
       </main>
 
@@ -99,11 +84,10 @@ export default function Layout() {
           const active = location.pathname === path;
           return (
             <Link key={path} to={path} style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              gap: '3px', padding: '4px 16px',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', padding: '4px 16px',
             }}>
               <div style={{ position: 'relative' }}>
-                <Icon size={22} color={active ? '#FF6B00' : '#bbb'} strokeWidth={active ? 2.5 : 1.8} />
+                <Icon size={22} color={active ? '#FF6B00' : '#ccc'} strokeWidth={active ? 2.5 : 1.8} />
                 {badge > 0 && (
                   <span style={{
                     position: 'absolute', top: '-6px', right: '-8px',
@@ -115,9 +99,10 @@ export default function Layout() {
                   </span>
                 )}
               </div>
-              <span style={{ fontSize: '10px', fontWeight: active ? '700' : '400', color: active ? '#FF6B00' : '#bbb' }}>
+              <span style={{ fontSize: '10px', fontWeight: active ? '700' : '400', color: active ? '#FF6B00' : '#ccc' }}>
                 {label}
               </span>
+              {active && <div style={{ width: '4px', height: '4px', borderRadius: '50%', background: '#FF6B00' }} />}
             </Link>
           );
         })}

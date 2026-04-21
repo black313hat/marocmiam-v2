@@ -1,148 +1,191 @@
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { getRestaurants } from '../../services/api';
+import { ChevronRight, MapPin, Bell, Star, Clock } from 'lucide-react';
 import { useLang } from '../../context/LanguageContext';
+import { useAuth } from '../../context/AuthContext';
+
+const CATEGORIES = [
+  { key: 'Restaurant', label: 'Restos', img: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&q=80', color: '#FFF3E8' },
+  { key: 'Fast Food', label: 'Fast Food', img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&q=80', color: '#FFF9E6' },
+  { key: 'Café', label: 'Cafés', img: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=200&q=80', color: '#F0FDF4' },
+  { key: 'Barbecue', label: 'Grills', img: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&q=80', color: '#FEF2F2' },
+  { key: 'Supermarket', label: 'Marché', img: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=200&q=80', color: '#EFF6FF' },
+];
+
+const PROMOS = [
+  { bg: '#FFF3E0', title: 'Craving something amazing?', discount: '50%', sub: 'On selected restaurants', btn: 'ORDER NOW', img: '🍔', color: '#FF6B00' },
+  { bg: '#F0FFF4', title: 'Fresh & Healthy meals', discount: '25%', sub: 'On your first order', btn: 'ORDER NOW', img: '🥗', color: '#16A34A' },
+  { bg: '#FFF0F6', title: 'Sweet treats await', discount: '30%', sub: 'On desserts today', btn: 'ORDER NOW', img: '🍰', color: '#EC4899' },
+];
 
 export default function Home() {
   const navigate = useNavigate();
   const { t, isRTL } = useLang();
+  const { user } = useAuth();
+  const [restaurants, setRestaurants] = useState([]);
+  const [promoIdx, setPromoIdx] = useState(0);
 
-  const SECTIONS = [
-    {
-      key: 'customer',
-      emoji: '🍽️',
-      bg: '#FF6B00',
-      title: t('order_food'),
-      sub: t('order_food_sub'),
-      cta: t('see_restaurants'),
-      href: '/restaurants',
-      stats: [t('restaurants_count'), t('less_45min'), t('cash_card')],
-      illustration: '🛵',
-    },
-    {
-      key: 'restaurant',
-      emoji: '🏪',
-      bg: '#1a1a1a',
-      title: t('become_partner'),
-      sub: t('become_partner_sub'),
-      cta: t('join'),
-      href: '/apply/restaurant',
-      stats: [t('no_fees'), t('sales_boost'), t('live_dashboard')],
-      illustration: '🏪',
-    },
-    {
-      key: 'courier',
-      emoji: '🛵',
-      bg: '#FFC107',
-      title: t('become_courier'),
-      sub: t('become_courier_sub'),
-      cta: t('apply'),
-      href: '/apply/courier',
-      stats: [t('free_hours'), t('weekly_pay'), t('equipment')],
-      illustration: '💰',
-    },
-  ];
+  useEffect(() => {
+    getRestaurants().then(res => setRestaurants(res.data)).catch(() => {});
+    const timer = setInterval(() => setPromoIdx(i => (i + 1) % PROMOS.length), 4000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const deals = restaurants.filter(r => r.rating >= 4.5).slice(0, 6);
+  const promo = PROMOS[promoIdx];
 
   return (
-    <div style={{ minHeight: '100vh', background: '#f5f5f5', paddingBottom: '80px', direction: isRTL ? 'rtl' : 'ltr' }}>
+    <div style={{ background: '#f8f8f8', minHeight: '100vh', paddingBottom: '80px', direction: isRTL ? 'rtl' : 'ltr' }}>
 
-      {/* Hero */}
-      <div style={{
-        background: '#FF6B00', padding: '24px 20px 32px',
-        position: 'relative', overflow: 'hidden',
-      }}>
-        <div style={{ position: 'absolute', right: '-30px', top: '-30px', width: '160px', height: '160px', borderRadius: '50%', background: 'rgba(255,255,255,0.08)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', right: '20px', bottom: '-40px', width: '100px', height: '100px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)', pointerEvents: 'none' }} />
-
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ position: 'relative', zIndex: 1 }}>
-          <p style={{ color: 'rgba(255,255,255,0.85)', fontSize: '13px', marginBottom: '6px' }}>
-            {t('delivery_tagline')}
-          </p>
-          <h1 style={{ color: '#fff', fontSize: '28px', fontWeight: '900', lineHeight: 1.15, marginBottom: '16px', letterSpacing: '-0.5px' }}>
-            {t('hero_title').split('\n').map((line, i) => (
-              <span key={i}>{line}{i === 0 && <br />}</span>
-            ))}
-          </h1>
-          <button
-            onClick={() => navigate('/restaurants')}
-            style={{
-              display: 'inline-flex', alignItems: 'center', gap: '8px',
-              background: '#fff', color: '#FF6B00', padding: '12px 20px',
-              borderRadius: '25px', fontWeight: '800', fontSize: '14px',
-              cursor: 'pointer', boxShadow: '0 4px 20px rgba(0,0,0,0.15)', border: 'none',
-            }}
-          >
-            {t('order_now')} <ArrowRight size={16} />
+      {/* Location bar */}
+      <div style={{ padding: '12px 16px 0', background: '#fff' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <MapPin size={16} color='#FF6B00' />
+            <div>
+              <p style={{ fontSize: '11px', color: '#999' }}>Livraison à</p>
+              <p style={{ fontSize: '14px', fontWeight: '800', color: '#1a1a1a' }}>
+                Al Hoceima, Maroc ▾
+              </p>
+            </div>
+          </div>
+          <button style={{ position: 'relative', padding: '8px', background: '#f5f5f5', borderRadius: '12px' }}>
+            <Bell size={20} color='#1a1a1a' />
+            <span style={{ position: 'absolute', top: '6px', right: '6px', width: '8px', height: '8px', background: '#FF6B00', borderRadius: '50%' }} />
           </button>
-        </motion.div>
-
-        <div style={{ position: 'absolute', right: '16px', bottom: '16px', fontSize: '80px', opacity: 0.25, pointerEvents: 'none' }}>
-          🛵
         </div>
       </div>
 
-      {/* Stats */}
-      <div style={{ display: 'flex', background: '#fff', borderBottom: '1px solid #f0f0f0' }}>
-        {[
-          { value: '500+', label: t('restaurants') },
-          { value: '45 min', label: t('delivery_time') },
-          { value: '24/7', label: t('available') },
-        ].map((s, i) => (
-          <div key={s.label} style={{ flex: 1, textAlign: 'center', padding: '14px 8px', borderRight: i < 2 ? '1px solid #f0f0f0' : 'none' }}>
-            <p style={{ fontSize: '18px', fontWeight: '900', color: '#FF6B00' }}>{s.value}</p>
-            <p style={{ fontSize: '10px', color: '#999', marginTop: '2px' }}>{s.label}</p>
+      {/* Promo banner */}
+      <div style={{ padding: '16px' }}>
+        <div style={{
+          background: promo.bg, borderRadius: '20px', padding: '20px',
+          position: 'relative', overflow: 'hidden', minHeight: '140px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          transition: 'background 0.5s',
+        }}>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: '13px', color: '#666', marginBottom: '4px' }}>{promo.title}</p>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '4px', marginBottom: '8px' }}>
+              <span style={{ fontSize: '36px', fontWeight: '900', color: promo.color }}>{promo.discount}</span>
+              <span style={{ fontSize: '16px', fontWeight: '700', color: promo.color }}>OFF</span>
+            </div>
+            <p style={{ fontSize: '12px', color: '#999', marginBottom: '12px' }}>{promo.sub}</p>
+            <button
+              onClick={() => navigate('/restaurants')}
+              style={{
+                background: promo.color, color: '#fff',
+                padding: '10px 20px', borderRadius: '25px',
+                fontSize: '12px', fontWeight: '800', cursor: 'pointer',
+              }}
+            >
+              {promo.btn} →
+            </button>
           </div>
-        ))}
+          <div style={{ fontSize: '90px', opacity: 0.8 }}>{promo.img}</div>
+
+          {/* Dots */}
+          <div style={{ position: 'absolute', bottom: '10px', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '4px' }}>
+            {PROMOS.map((_, i) => (
+              <div key={i} onClick={() => setPromoIdx(i)} style={{
+                width: i === promoIdx ? '16px' : '6px', height: '6px',
+                borderRadius: '3px', background: i === promoIdx ? promo.color : '#ccc',
+                cursor: 'pointer', transition: 'all 0.3s',
+              }} />
+            ))}
+          </div>
+        </div>
       </div>
 
-      {/* Sections */}
-      <div style={{ padding: '20px 16px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-        <h2 style={{ fontSize: '18px', fontWeight: '800', marginBottom: '4px' }}>
-          {t('what_do_you_want')}
-        </h2>
-
-        {SECTIONS.map((s, i) => (
-          <motion.div
-            key={s.key}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.08 }}
-            onClick={() => navigate(s.href)}
-            style={{ background: s.bg, borderRadius: '20px', padding: '20px', cursor: 'pointer', position: 'relative', overflow: 'hidden' }}
-          >
-            <div style={{ position: 'absolute', right: '-10px', bottom: '-10px', fontSize: '90px', opacity: 0.15, pointerEvents: 'none' }}>
-              {s.illustration}
+      {/* Categories */}
+      <div style={{ padding: '0 16px 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: '800' }}>Categories</h2>
+          <button onClick={() => navigate('/restaurants')} style={{ display: 'flex', alignItems: 'center', gap: '2px', fontSize: '13px', color: '#FF6B00', fontWeight: '600', cursor: 'pointer' }}>
+            See All <ChevronRight size={16} />
+          </button>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
+          {CATEGORIES.slice(0, 3).map(cat => (
+            <div
+              key={cat.key}
+              onClick={() => navigate(`/restaurants?category=${cat.key}`)}
+              style={{
+                background: cat.color, borderRadius: '16px', padding: '12px',
+                cursor: 'pointer', overflow: 'hidden', position: 'relative',
+              }}
+            >
+              <img
+                src={cat.img} alt={cat.label}
+                style={{ width: '100%', height: '70px', objectFit: 'cover', borderRadius: '10px', marginBottom: '8px' }}
+                onError={e => { e.target.style.display = 'none'; }}
+              />
+              <p style={{ fontSize: '12px', fontWeight: '700', color: '#1a1a1a' }}>{cat.label}</p>
             </div>
-            <div style={{ position: 'relative', zIndex: 1 }}>
-              <div style={{ width: '48px', height: '48px', borderRadius: '14px', background: 'rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', marginBottom: '12px' }}>
-                {s.emoji}
+          ))}
+        </div>
+
+        {/* Dots carousel for categories */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '4px', marginTop: '10px' }}>
+          {[0, 1].map(i => (
+            <div key={i} style={{ width: i === 0 ? '16px' : '6px', height: '6px', borderRadius: '3px', background: i === 0 ? '#FF6B00' : '#e0e0e0' }} />
+          ))}
+        </div>
+      </div>
+
+      {/* Deals for you */}
+      <div style={{ padding: '0 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+          <h2 style={{ fontSize: '18px', fontWeight: '800' }}>Deals for You</h2>
+          <button onClick={() => navigate('/restaurants')} style={{ display: 'flex', alignItems: 'center', gap: '2px', fontSize: '13px', color: '#FF6B00', fontWeight: '600', cursor: 'pointer' }}>
+            View All <ChevronRight size={16} />
+          </button>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', marginLeft: '-16px', paddingLeft: '16px', paddingRight: '16px', paddingBottom: '8px' }}>
+          {deals.map(r => (
+            <div
+              key={r.id}
+              onClick={() => navigate(`/restaurant/${r.id}`)}
+              style={{
+                flexShrink: 0, width: '200px', background: '#fff',
+                borderRadius: '16px', overflow: 'hidden', cursor: 'pointer',
+                boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
+              }}
+            >
+              <div style={{ position: 'relative', height: '120px' }}>
+                <img
+                  src={r.image_url || 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&q=80'}
+                  alt={r.name}
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                  onError={e => { e.target.src = 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=400&q=80'; }}
+                />
+                {/* Discount badge */}
+                <div style={{
+                  position: 'absolute', top: '8px', right: '8px',
+                  background: '#FF6B00', borderRadius: '8px',
+                  padding: '3px 8px', display: 'flex', flexDirection: 'column', alignItems: 'center',
+                }}>
+                  <span style={{ color: '#fff', fontSize: '8px', fontWeight: '600' }}>OFF</span>
+                  <span style={{ color: '#fff', fontSize: '14px', fontWeight: '900', lineHeight: 1 }}>25%</span>
+                </div>
               </div>
-              <h3 style={{ color: '#fff', fontSize: '18px', fontWeight: '800', marginBottom: '6px', lineHeight: 1.2 }}>
-                {s.title}
-              </h3>
-              <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '12px', lineHeight: 1.5, marginBottom: '14px' }}>
-                {s.sub}
-              </p>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginBottom: '16px' }}>
-                {s.stats.map(stat => (
-                  <span key={stat} style={{ background: 'rgba(255,255,255,0.18)', color: '#fff', fontSize: '10px', fontWeight: '600', padding: '4px 10px', borderRadius: '20px' }}>
-                    {stat}
+              <div style={{ padding: '10px 12px' }}>
+                <h3 style={{ fontSize: '14px', fontWeight: '800', marginBottom: '4px' }}>{r.name}</h3>
+                <p style={{ fontSize: '11px', color: '#999', marginBottom: '6px' }}>{r.category}</p>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '12px', fontWeight: '700', color: '#FF6B00' }}>
+                    <Star size={12} fill='#FF6B00' color='#FF6B00' /> {r.rating}
                   </span>
-                ))}
-              </div>
-              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: '#fff', borderRadius: '25px', padding: '10px 18px' }}>
-                <span style={{ fontSize: '13px', fontWeight: '800', color: s.bg === '#FFC107' ? '#FF6B00' : s.bg }}>
-                  {s.cta}
-                </span>
-                <ArrowRight size={14} color={s.bg === '#FFC107' ? '#FF6B00' : s.bg} />
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '3px', fontSize: '11px', color: '#999' }}>
+                    <Clock size={11} /> 25-35 min
+                  </span>
+                </div>
               </div>
             </div>
-          </motion.div>
-        ))}
-      </div>
-
-      <div style={{ textAlign: 'center', padding: '16px' }}>
-        <p style={{ fontSize: '11px', color: '#ccc' }}>© 2026 MarocMiam · Maroc 🇲🇦</p>
+          ))}
+        </div>
       </div>
     </div>
   );
