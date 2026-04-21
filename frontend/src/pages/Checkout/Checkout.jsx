@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
 import { useAuth } from '../../context/AuthContext';
+import { useLang } from '../../context/LanguageContext';
 import API from '../../services/api';
-import { MapPin, CreditCard, Banknote, ArrowLeft, Bike, Shield } from 'lucide-react';
+import { MapPin, ArrowLeft, Bike, Shield, ChevronRight } from 'lucide-react';
 import { MapContainer, TileLayer, Marker, useMapEvents } from 'react-leaflet';
 import toast from 'react-hot-toast';
 import 'leaflet/dist/leaflet.css';
@@ -17,14 +18,14 @@ L.Icon.Default.mergeOptions({
 });
 
 const AL_HOCEIMA = [35.2517, -3.9372];
-const DELIVERY_RATES = { 1: 10, 3: 15, 5: 20, 10: 25, 99: 35 };
 const SERVICE_FEE = 5;
 
 function getDeliveryFee(distanceKm) {
   if (!distanceKm) return 15;
-  for (const [limit, fee] of Object.entries(DELIVERY_RATES)) {
-    if (distanceKm <= parseFloat(limit)) return fee;
-  }
+  if (distanceKm <= 1) return 10;
+  if (distanceKm <= 3) return 15;
+  if (distanceKm <= 5) return 20;
+  if (distanceKm <= 10) return 25;
   return 35;
 }
 
@@ -44,6 +45,7 @@ function MapPicker({ position, onMove }) {
 export default function Checkout() {
   const { cart: items, restaurantId, clearCart } = useCart();
   const { user } = useAuth();
+  const { t, isRTL } = useLang();
   const navigate = useNavigate();
   const [address, setAddress] = useState('');
   const [position, setPosition] = useState(null);
@@ -63,10 +65,7 @@ export default function Checkout() {
 
   useEffect(() => {
     if (position && restaurant?.lat && restaurant?.lng) {
-      const dist = calcDistance(
-        restaurant.lat, restaurant.lng,
-        position.lat, position.lng
-      );
+      const dist = calcDistance(restaurant.lat, restaurant.lng, position.lat, position.lng);
       setDistanceKm(dist);
       setDeliveryFee(getDeliveryFee(dist));
     }
@@ -97,7 +96,7 @@ export default function Checkout() {
     });
   }
 
-  const itemsTotal = items.reduce((s, i) => s + i.price * i.quantity, 0);
+  const itemsTotal = (items || []).reduce((s, i) => s + i.price * i.quantity, 0);
   const total = itemsTotal + deliveryFee + SERVICE_FEE;
 
   async function handleOrder() {
@@ -105,17 +104,16 @@ export default function Checkout() {
     if (!user) { navigate('/login'); return; }
     setLoading(true);
     try {
-      const res = await API.post('/orders/create/', {
+      await API.post('/orders/create/', {
         restaurant_id: restaurantId,
         delivery_address: address,
         delivery_lat: position?.lat,
         delivery_lng: position?.lng,
         payment_method: paymentMethod,
-        items: items.map(i => ({
-          menu_item_id: i.id,
-          quantity: i.quantity,
-          price: i.price,
-        })),
+        delivery_fee: deliveryFee,
+        service_fee: SERVICE_FEE,
+        distance_km: distanceKm,
+        items: items.map(i => ({ menu_item_id: i.id, quantity: i.quantity, price: i.price })),
       });
       clearCart();
       toast.success('Order placed! 🎉');
@@ -126,37 +124,50 @@ export default function Checkout() {
     setLoading(false);
   }
 
-  if (items.length === 0) {
+  if (!items || items.length === 0) {
     navigate('/cart');
     return null;
   }
 
   return (
-    <div style={{ paddingBottom: '100px' }}>
+    <div style={{ background: '#f8f8f8', minHeight: '100vh', paddingBottom: '120px', direction: isRTL ? 'rtl' : 'ltr' }}>
+
       {/* Header */}
-      <div style={{ background: '#00A651', padding: '16px' }}>
+      <div style={{ background: '#fff', padding: '16px', borderBottom: '1px solid #f0f0f0', display: 'flex', alignItems: 'center', gap: '12px' }}>
         <button onClick={() => navigate(-1)} style={{
-          display: 'flex', alignItems: 'center', gap: '6px',
-          background: 'rgba(255,255,255,0.2)', border: 'none', borderRadius: '20px',
-          padding: '6px 14px', color: '#fff', fontSize: '13px', cursor: 'pointer', marginBottom: '12px',
+          width: '38px', height: '38px', borderRadius: '50%',
+          background: '#f5f5f5', border: 'none', cursor: 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
         }}>
-          <ArrowLeft size={14} /> Back
+          <ArrowLeft size={18} color='#1a1a1a' />
         </button>
-        <h1 style={{ color: '#fff', fontSize: '20px', fontWeight: '800' }}>Finaliser la commande</h1>
-        <p style={{ color: 'rgba(255,255,255,0.8)', fontSize: '13px', marginTop: '2px' }}>
-          {restaurant?.name}
-        </p>
+        <div>
+          <h1 style={{ fontSize: '18px', fontWeight: '800' }}>Checkout</h1>
+          {restaurant && <p style={{ fontSize: '12px', color: '#999' }}>{restaurant.name}</p>}
+        </div>
       </div>
 
-      <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+      <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
 
-        {/* Map */}
-        <div style={{ background: '#fff', borderRadius: '16px', overflow: 'hidden', border: '1px solid #e2e8f0' }}>
-          <div style={{ padding: '14px 16px 10px', borderBottom: '1px solid #f1f5f9' }}>
-            <p style={{ fontSize: '14px', fontWeight: '700', marginBottom: '2px' }}>📍 Adresse de livraison</p>
-            <p style={{ fontSize: '12px', color: '#64748b' }}>Cliquez sur la carte pour choisir votre adresse</p>
+        {/* Delivery address */}
+        <div style={{ background: '#fff', borderRadius: '16px', overflow: 'hidden', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+          <div style={{ padding: '14px 16px', borderBottom: '1px solid #f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ width: '32px', height: '32px', borderRadius: '10px', background: '#FFF3E8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <MapPin size={16} color='#FF6B00' />
+              </div>
+              <div>
+                <p style={{ fontSize: '14px', fontWeight: '700' }}>Delivery Address</p>
+                <p style={{ fontSize: '12px', color: '#999' }}>
+                  {address || 'Tap map to select'}
+                </p>
+              </div>
+            </div>
+            <ChevronRight size={16} color='#ccc' />
           </div>
-          <div style={{ height: '200px' }}>
+
+          {/* Map */}
+          <div style={{ height: '180px' }}>
             <MapContainer
               center={position ? [position.lat, position.lng] : AL_HOCEIMA}
               zoom={14}
@@ -166,110 +177,121 @@ export default function Checkout() {
               <MapPicker position={position} onMove={handleMapClick} />
             </MapContainer>
           </div>
-          <div style={{ padding: '10px 14px' }}>
-            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-              <input
-                placeholder="Votre adresse..."
-                value={address}
-                onChange={e => setAddress(e.target.value)}
-                style={{
-                  flex: 1, padding: '10px 12px', borderRadius: '10px',
-                  border: '1px solid #e2e8f0', fontSize: '13px',
-                }}
-              />
-              <button onClick={locateMe} style={{
-                padding: '10px 14px', borderRadius: '10px', border: 'none',
-                background: '#00A651', color: '#fff', fontWeight: '600',
-                fontSize: '12px', cursor: 'pointer',
-              }}>
-                📍 Me localiser
-              </button>
-            </div>
-            {distanceKm && (
-              <p style={{ fontSize: '11px', color: '#64748b', marginTop: '6px' }}>
-                📏 Distance: {distanceKm.toFixed(1)} km du restaurant
-              </p>
-            )}
+
+          <div style={{ padding: '12px 14px', display: 'flex', gap: '8px' }}>
+            <input
+              placeholder="Your address..."
+              value={address}
+              onChange={e => setAddress(e.target.value)}
+              style={{
+                flex: 1, padding: '10px 12px', borderRadius: '10px',
+                border: '1.5px solid #f0f0f0', fontSize: '13px', color: '#1a1a1a',
+                background: '#f8f8f8',
+              }}
+            />
+            <button onClick={locateMe} style={{
+              padding: '10px 14px', borderRadius: '10px',
+              background: '#FF6B00', color: '#fff', fontWeight: '700',
+              fontSize: '12px', cursor: 'pointer', flexShrink: 0,
+              display: 'flex', alignItems: 'center', gap: '4px',
+            }}>
+              <MapPin size={13} /> Locate
+            </button>
           </div>
+          {distanceKm && (
+            <p style={{ fontSize: '11px', color: '#999', padding: '0 14px 10px' }}>
+              📏 {distanceKm.toFixed(1)} km from restaurant
+            </p>
+          )}
         </div>
 
         {/* Payment method */}
-        <div style={{ background: '#fff', borderRadius: '16px', padding: '16px', border: '1px solid #e2e8f0' }}>
-          <p style={{ fontSize: '14px', fontWeight: '700', marginBottom: '12px' }}>💳 Mode de paiement</p>
+        <div style={{ background: '#fff', borderRadius: '16px', padding: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+          <p style={{ fontSize: '15px', fontWeight: '800', marginBottom: '12px' }}>Payment Method</p>
           <div style={{ display: 'flex', gap: '10px' }}>
             {[
-              { key: 'cash', label: 'Espèces', icon: '💵', sub: 'Payez à la livraison' },
-              { key: 'card', label: 'Carte', icon: '💳', sub: 'Paiement en ligne' },
+              { key: 'cash', label: 'Cash', icon: '💵', sub: 'Pay on delivery' },
+              { key: 'card', label: 'Card', icon: '💳', sub: 'Online payment' },
             ].map(p => (
-              <button
-                key={p.key}
-                onClick={() => setPaymentMethod(p.key)}
-                style={{
-                  flex: 1, padding: '12px', borderRadius: '12px', cursor: 'pointer',
-                  border: paymentMethod === p.key ? '2px solid #00A651' : '1px solid #e2e8f0',
-                  background: paymentMethod === p.key ? 'rgba(0,166,81,0.06)' : '#f8fafc',
-                  textAlign: 'center',
-                }}
-              >
-                <p style={{ fontSize: '22px', marginBottom: '4px' }}>{p.icon}</p>
-                <p style={{ fontSize: '13px', fontWeight: '700', color: paymentMethod === p.key ? '#00A651' : '#374151' }}>
+              <button key={p.key} onClick={() => setPaymentMethod(p.key)} style={{
+                flex: 1, padding: '14px', borderRadius: '14px', cursor: 'pointer',
+                border: paymentMethod === p.key ? '2px solid #FF6B00' : '1.5px solid #f0f0f0',
+                background: paymentMethod === p.key ? '#FFF3E8' : '#f8f8f8',
+                textAlign: 'center', transition: 'all 0.2s',
+              }}>
+                <p style={{ fontSize: '24px', marginBottom: '6px' }}>{p.icon}</p>
+                <p style={{ fontSize: '13px', fontWeight: '800', color: paymentMethod === p.key ? '#FF6B00' : '#1a1a1a' }}>
                   {p.label}
                 </p>
-                <p style={{ fontSize: '10px', color: '#94a3b8', marginTop: '2px' }}>{p.sub}</p>
+                <p style={{ fontSize: '10px', color: '#999', marginTop: '2px' }}>{p.sub}</p>
               </button>
             ))}
           </div>
           {paymentMethod === 'card' && (
             <p style={{ fontSize: '12px', color: '#f59e0b', marginTop: '10px', textAlign: 'center' }}>
-              ⚠️ Paiement par carte bientôt disponible — veuillez choisir espèces
+              ⚠️ Card payment coming soon — please use cash
             </p>
           )}
         </div>
 
         {/* Order summary */}
-        <div style={{ background: '#fff', borderRadius: '16px', padding: '16px', border: '1px solid #e2e8f0' }}>
-          <p style={{ fontSize: '14px', fontWeight: '700', marginBottom: '12px' }}>🧾 Récapitulatif</p>
-
+        <div style={{ background: '#fff', borderRadius: '16px', padding: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.05)' }}>
+          <p style={{ fontSize: '15px', fontWeight: '800', marginBottom: '14px' }}>Order Summary</p>
           {items.map(item => (
-            <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '4px 0' }}>
-              <span>{item.quantity}× {item.name}</span>
-              <span style={{ fontWeight: '600' }}>{(item.price * item.quantity).toFixed(0)} MAD</span>
+            <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', padding: '5px 0', borderBottom: '1px solid #f5f5f5' }}>
+              <span style={{ color: '#666' }}>{item.quantity}× {item.name}</span>
+              <span style={{ fontWeight: '700' }}>{(item.price * item.quantity).toFixed(0)} MAD</span>
             </div>
           ))}
-
-          <div style={{ borderTop: '1px dashed #e2e8f0', marginTop: '10px', paddingTop: '10px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '6px', color: '#64748b' }}>
+          <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#999' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Bike size={13} /> Livraison {distanceKm ? `(${distanceKm.toFixed(1)} km)` : ''}
+                <Bike size={13} /> Delivery {distanceKm ? `(${distanceKm.toFixed(1)} km)` : ''}
               </span>
               <span>{deliveryFee} MAD</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginBottom: '10px', color: '#64748b' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#999' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                <Shield size={13} /> Frais de service
+                <Shield size={13} /> Service fee
               </span>
               <span>{SERVICE_FEE} MAD</span>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '16px', fontWeight: '800' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '18px', fontWeight: '900', paddingTop: '10px', borderTop: '1px solid #f0f0f0' }}>
               <span>Total</span>
-              <span style={{ color: '#00A651' }}>{total.toFixed(0)} MAD</span>
+              <span style={{ color: '#FF6B00' }}>{total.toFixed(0)} MAD</span>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Place order button */}
+      {/* Place order button */}
+      <div style={{
+        position: 'fixed', bottom: '72px',
+        left: '50%', transform: 'translateX(-50%)',
+        width: 'calc(100% - 32px)', maxWidth: '448px', zIndex: 50,
+      }}>
         <button
           onClick={handleOrder}
           disabled={loading || paymentMethod === 'card'}
           style={{
-            width: '100%', padding: '16px', borderRadius: '14px', border: 'none',
-            background: loading || paymentMethod === 'card' ? '#94a3b8' : '#00A651',
-            color: '#fff', fontSize: '16px', fontWeight: '800',
+            width: '100%', background: loading || paymentMethod === 'card' ? '#ccc' : '#FF6B00',
+            color: '#fff', padding: '0', borderRadius: '16px', border: 'none',
             cursor: loading || paymentMethod === 'card' ? 'not-allowed' : 'pointer',
-            boxShadow: '0 4px 16px rgba(0,166,81,0.3)',
+            boxShadow: '0 8px 32px rgba(255,107,0,0.4)',
+            display: 'flex', alignItems: 'center', overflow: 'hidden',
           }}
         >
-          {loading ? 'Commande en cours...' : `Commander — ${total.toFixed(0)} MAD`}
+          <div style={{ background: 'rgba(0,0,0,0.15)', padding: '16px 18px', borderRight: '1px solid rgba(255,255,255,0.2)' }}>
+            <span style={{ fontWeight: '800', fontSize: '15px' }}>{items.length} items</span>
+          </div>
+          <div style={{ flex: 1, textAlign: 'center', padding: '16px 8px' }}>
+            <span style={{ fontWeight: '800', fontSize: '15px' }}>
+              {loading ? 'Placing order...' : 'Place Order'}
+            </span>
+          </div>
+          <div style={{ background: 'rgba(0,0,0,0.15)', padding: '16px 18px', borderLeft: '1px solid rgba(255,255,255,0.2)' }}>
+            <span style={{ fontWeight: '800', fontSize: '15px' }}>{total.toFixed(0)} MAD</span>
+          </div>
         </button>
       </div>
     </div>
