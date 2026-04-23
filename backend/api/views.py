@@ -760,8 +760,8 @@ def create_user(request):
         username=username, email=email, password=password,
         is_staff=is_staff, is_superuser=is_superuser,
     )
-    UserProfile.objects.create(user=user, role='customer', status='approved')
-
+    profile_role = role if role in ('restaurant_owner', 'courier') else 'customer'
+    UserProfile.objects.create(user=user, role=profile_role, status='approved')
     return Response({
         'status': 'User created',
         'user': {

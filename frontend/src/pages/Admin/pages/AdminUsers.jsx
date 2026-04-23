@@ -141,7 +141,7 @@ function AddUserModal({ onClose, onCreated }) {
       const payload = { username: form.username, email: form.email, password: form.password, role: form.role === 'superuser' ? 'staff' : 'customer' };
       const res = await API.post('/admin/users/create/', payload);
       const newUser = res.data.user;
-      if (['courier'].includes(form.role)) {
+      if (['courier', 'restaurant_owner'].includes(form.role)) {
         await API.patch(`/admin/users/${newUser.id}/profile-role/`, { role: form.role });
         newUser.profile_role = form.role;
       }
