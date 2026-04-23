@@ -5,10 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
 const ROLE_META = {
-  superuser:        { label: 'Admin',            bg: 'rgba(0,166,81,0.1)', color: '#00A651', icon: '🛡️' },
-  restaurant_owner: { label: 'Restaurant Owner', bg: '#fff3e8',            color: '#FF6B00', icon: '🍽️' },
-  courier:          { label: 'Courier',           bg: '#eff6ff',            color: '#2563eb', icon: '🛵' },
-  customer:         { label: 'Customer',          bg: '#f1f5f9',            color: '#64748b', icon: '👤' },
+  superuser: { label: 'Admin', bg: 'rgba(0,166,81,0.1)', color: '#00A651', icon: '🛡️' },
+  restaurant_owner: { label: 'Restaurant Owner', bg: '#fff3e8', color: '#FF6B00', icon: '🍽️' },
+  courier: { label: 'Courier', bg: '#eff6ff', color: '#2563eb', icon: '🛵' },
+  customer: { label: 'Customer', bg: '#f1f5f9', color: '#64748b', icon: '👤' },
 };
 
 function getUserRole(u) {
@@ -101,10 +101,10 @@ function AssignRestaurantModal({ user, onClose, onAssigned }) {
         ) : (
           <div style={{ marginBottom: '16px' }}>
             {[
-              { key: 'name',     label: 'Restaurant Name', placeholder: 'e.g. Café Atlas' },
-              { key: 'category', label: 'Category',        placeholder: 'e.g. Café, Pizza, Burger' },
-              { key: 'city',     label: 'City',            placeholder: 'e.g. Fès' },
-              { key: 'address',  label: 'Address',         placeholder: 'Full address' },
+              { key: 'name', label: 'Restaurant Name', placeholder: 'e.g. Café Atlas' },
+              { key: 'category', label: 'Category', placeholder: 'e.g. Café, Pizza, Burger' },
+              { key: 'city', label: 'City', placeholder: 'e.g. Fès' },
+              { key: 'address', label: 'Address', placeholder: 'Full address' },
             ].map(f => (
               <div key={f.key} style={{ marginBottom: '12px' }}>
                 <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', marginBottom: '5px', textTransform: 'uppercase' }}>{f.label}</label>
@@ -131,7 +131,15 @@ function AssignRestaurantModal({ user, onClose, onAssigned }) {
 function AddUserModal({ onClose, onCreated }) {
   const [form, setForm] = useState({ username: '', email: '', password: '', role: 'customer' });
   const [loading, setLoading] = useState(false);
-
+  const res = await API.post('/admin/users/create/', payload);
+  const newUser = res.data.user;
+  console.log('Created user:', newUser);
+  console.log('Form role:', form.role);
+  if (['courier', 'restaurant_owner'].includes(form.role)) {
+    const roleRes = await API.patch(`/admin/users/${newUser.id}/profile-role/`, { role: form.role });
+    console.log('Role set:', roleRes.data);
+    newUser.profile_role = form.role;
+  }
   async function submit() {
     if (!form.username || !form.password) return toast.error('Username and password required');
     setLoading(true);
@@ -146,8 +154,8 @@ function AddUserModal({ onClose, onCreated }) {
         newUser.profile_role = form.role;
       }
       toast.success(`User "${newUser.username}" created!`);
-      onCreated({ ...newUser, profile_role: newUser.profile_role || 'customer', _pendingRestaurant: form.role === 'restaurant_owner' });
-      onClose();
+      onClose();  // close first
+      setTimeout(() => onCreated(newUser), 50);  // then trigger parent with small delay
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to create user');
     }
@@ -162,9 +170,9 @@ function AddUserModal({ onClose, onCreated }) {
           <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '6px', cursor: 'pointer' }}><X size={16} color="#64748b" /></button>
         </div>
         {[
-          { key: 'username', label: 'Username',  type: 'text',     placeholder: 'e.g. john_doe' },
-          { key: 'email',    label: 'Email',     type: 'email',    placeholder: 'john@example.com' },
-          { key: 'password', label: 'Password',  type: 'password', placeholder: 'Min. 6 characters' },
+          { key: 'username', label: 'Username', type: 'text', placeholder: 'e.g. john_doe' },
+          { key: 'email', label: 'Email', type: 'email', placeholder: 'john@example.com' },
+          { key: 'password', label: 'Password', type: 'password', placeholder: 'Min. 6 characters' },
         ].map(f => (
           <div key={f.key} style={{ marginBottom: '14px' }}>
             <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', marginBottom: '6px', textTransform: 'uppercase' }}>{f.label}</label>
@@ -421,11 +429,11 @@ export default function AdminUsers() {
   }
 
   const counts = {
-    all:              users.length,
-    superuser:        users.filter(u => u.is_staff || u.is_superuser).length,
+    all: users.length,
+    superuser: users.filter(u => u.is_staff || u.is_superuser).length,
     restaurant_owner: users.filter(u => !u.is_staff && u.profile_role === 'restaurant_owner').length,
-    courier:          users.filter(u => !u.is_staff && u.profile_role === 'courier').length,
-    customer:         users.filter(u => !u.is_staff && (!u.profile_role || u.profile_role === 'customer')).length,
+    courier: users.filter(u => !u.is_staff && u.profile_role === 'courier').length,
+    customer: users.filter(u => !u.is_staff && (!u.profile_role || u.profile_role === 'customer')).length,
   };
 
   const filtered = users.filter(u => {
@@ -454,11 +462,11 @@ export default function AdminUsers() {
       {/* Filter tabs */}
       <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', flexWrap: 'wrap' }}>
         {[
-          { key: 'all',              label: 'All' },
-          { key: 'superuser',        label: '🛡️ Admin' },
+          { key: 'all', label: 'All' },
+          { key: 'superuser', label: '🛡️ Admin' },
           { key: 'restaurant_owner', label: '🍽️ Owner' },
-          { key: 'courier',          label: '🛵 Courier' },
-          { key: 'customer',         label: '👤 Customer' },
+          { key: 'courier', label: '🛵 Courier' },
+          { key: 'customer', label: '👤 Customer' },
         ].map(({ key, label }) => (
           <button key={key} onClick={() => setFilterRole(key)} style={{
             padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: '600',
@@ -561,8 +569,8 @@ export default function AdminUsers() {
             if (u._pendingRestaurant) setModal({ type: 'assign_restaurant', user: u });
           }} />
         )}
-        {modal?.type === 'reset'             && <ResetPasswordModal user={modal.user} onClose={() => setModal(null)} />}
-        {modal?.type === 'delete'            && <DeleteModal user={modal.user} onClose={() => setModal(null)} onDeleted={id => setUsers(p => p.filter(u => u.id !== id))} />}
+        {modal?.type === 'reset' && <ResetPasswordModal user={modal.user} onClose={() => setModal(null)} />}
+        {modal?.type === 'delete' && <DeleteModal user={modal.user} onClose={() => setModal(null)} onDeleted={id => setUsers(p => p.filter(u => u.id !== id))} />}
         {modal?.type === 'assign_restaurant' && <AssignRestaurantModal user={modal.user} onClose={() => setModal(null)} onAssigned={handleRestaurantAssigned} />}
       </AnimatePresence>
     </div>
