@@ -5,10 +5,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 
 const ROLE_META = {
-  superuser: { label: 'Admin', bg: 'rgba(0,166,81,0.1)', color: '#00A651', icon: '🛡️' },
-  restaurant_owner: { label: 'Restaurant Owner', bg: '#fff3e8', color: '#FF6B00', icon: '🍽️' },
-  courier: { label: 'Courier', bg: '#eff6ff', color: '#2563eb', icon: '🛵' },
-  customer: { label: 'Customer', bg: '#f1f5f9', color: '#64748b', icon: '👤' },
+  superuser:        { label: 'Admin',            bg: 'rgba(0,166,81,0.1)', color: '#00A651', icon: '🛡️' },
+  restaurant_owner: { label: 'Restaurant Owner', bg: '#fff3e8',            color: '#FF6B00', icon: '🍽️' },
+  courier:          { label: 'Courier',           bg: '#eff6ff',            color: '#2563eb', icon: '🛵' },
+  customer:         { label: 'Customer',          bg: '#f1f5f9',            color: '#64748b', icon: '👤' },
 };
 
 function getUserRole(u) {
@@ -18,7 +18,6 @@ function getUserRole(u) {
   return 'customer';
 }
 
-// ── Modal wrapper ──
 function Modal({ onClose, children }) {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={onClose}
@@ -32,7 +31,6 @@ function Modal({ onClose, children }) {
   );
 }
 
-// ── Assign Restaurant Modal ──
 function AssignRestaurantModal({ user, onClose, onAssigned }) {
   const [restaurants, setRestaurants] = useState([]);
   const [loadingRest, setLoadingRest] = useState(true);
@@ -42,7 +40,10 @@ function AssignRestaurantModal({ user, onClose, onAssigned }) {
   const [newForm, setNewForm] = useState({ name: '', category: 'Restaurant', city: '', address: '' });
 
   useEffect(() => {
-    API.get('/restaurants/').then(res => setRestaurants(res.data)).catch(() => toast.error('Failed to load restaurants')).finally(() => setLoadingRest(false));
+    API.get('/restaurants/')
+      .then(res => setRestaurants(res.data))
+      .catch(() => toast.error('Failed to load restaurants'))
+      .finally(() => setLoadingRest(false));
   }, []);
 
   async function submit() {
@@ -75,7 +76,6 @@ function AssignRestaurantModal({ user, onClose, onAssigned }) {
           </div>
           <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '6px', cursor: 'pointer' }}><X size={16} color="#64748b" /></button>
         </div>
-
         <div style={{ display: 'flex', gap: '8px', marginBottom: '18px' }}>
           {[{ k: 'existing', l: '🏪 Existing' }, { k: 'new', l: '➕ Create New' }].map(({ k, l }) => (
             <button key={k} onClick={() => setMode(k)} style={{
@@ -86,7 +86,6 @@ function AssignRestaurantModal({ user, onClose, onAssigned }) {
             }}>{l}</button>
           ))}
         </div>
-
         {mode === 'existing' ? (
           <div style={{ marginBottom: '16px' }}>
             <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', marginBottom: '6px', textTransform: 'uppercase' }}>Select Restaurant</label>
@@ -101,10 +100,10 @@ function AssignRestaurantModal({ user, onClose, onAssigned }) {
         ) : (
           <div style={{ marginBottom: '16px' }}>
             {[
-              { key: 'name', label: 'Restaurant Name', placeholder: 'e.g. Café Atlas' },
-              { key: 'category', label: 'Category', placeholder: 'e.g. Café, Pizza, Burger' },
-              { key: 'city', label: 'City', placeholder: 'e.g. Fès' },
-              { key: 'address', label: 'Address', placeholder: 'Full address' },
+              { key: 'name',     label: 'Restaurant Name', placeholder: 'e.g. Café Atlas' },
+              { key: 'category', label: 'Category',        placeholder: 'e.g. Café, Pizza, Burger' },
+              { key: 'city',     label: 'City',            placeholder: 'e.g. Fès' },
+              { key: 'address',  label: 'Address',         placeholder: 'Full address' },
             ].map(f => (
               <div key={f.key} style={{ marginBottom: '12px' }}>
                 <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', marginBottom: '5px', textTransform: 'uppercase' }}>{f.label}</label>
@@ -114,7 +113,6 @@ function AssignRestaurantModal({ user, onClose, onAssigned }) {
             ))}
           </div>
         )}
-
         <button onClick={submit} disabled={!canSubmit} style={{
           width: '100%', padding: '13px', borderRadius: '12px', background: '#FF6B00',
           color: '#fff', fontWeight: '800', fontSize: '14px', border: 'none',
@@ -127,26 +125,22 @@ function AssignRestaurantModal({ user, onClose, onAssigned }) {
   );
 }
 
-// ── Add User Modal ──
 function AddUserModal({ onClose, onCreated }) {
   const [form, setForm] = useState({ username: '', email: '', password: '', role: 'customer' });
   const [loading, setLoading] = useState(false);
-  const res = await API.post('/admin/users/create/', payload);
-  const newUser = res.data.user;
-  console.log('Created user:', newUser);
-  console.log('Form role:', form.role);
-  if (['courier', 'restaurant_owner'].includes(form.role)) {
-    const roleRes = await API.patch(`/admin/users/${newUser.id}/profile-role/`, { role: form.role });
-    console.log('Role set:', roleRes.data);
-    newUser.profile_role = form.role;
-  }
+
   async function submit() {
     if (!form.username || !form.password) return toast.error('Username and password required');
     setLoading(true);
     try {
       const token = localStorage.getItem('admin_token');
       API.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      const payload = { username: form.username, email: form.email, password: form.password, role: form.role === 'superuser' ? 'staff' : 'customer' };
+      const payload = {
+        username: form.username,
+        email: form.email,
+        password: form.password,
+        role: form.role === 'superuser' ? 'staff' : 'customer',
+      };
       const res = await API.post('/admin/users/create/', payload);
       const newUser = res.data.user;
       if (['courier', 'restaurant_owner'].includes(form.role)) {
@@ -154,8 +148,8 @@ function AddUserModal({ onClose, onCreated }) {
         newUser.profile_role = form.role;
       }
       toast.success(`User "${newUser.username}" created!`);
-      onClose();  // close first
-      setTimeout(() => onCreated(newUser), 50);  // then trigger parent with small delay
+      onClose();
+      setTimeout(() => onCreated({ ...newUser, _pendingRestaurant: form.role === 'restaurant_owner' }), 50);
     } catch (err) {
       toast.error(err.response?.data?.error || 'Failed to create user');
     }
@@ -170,13 +164,14 @@ function AddUserModal({ onClose, onCreated }) {
           <button onClick={onClose} style={{ background: '#f1f5f9', border: 'none', borderRadius: '8px', padding: '6px', cursor: 'pointer' }}><X size={16} color="#64748b" /></button>
         </div>
         {[
-          { key: 'username', label: 'Username', type: 'text', placeholder: 'e.g. john_doe' },
-          { key: 'email', label: 'Email', type: 'email', placeholder: 'john@example.com' },
-          { key: 'password', label: 'Password', type: 'password', placeholder: 'Min. 6 characters' },
+          { key: 'username', label: 'Username',  type: 'text',     placeholder: 'e.g. john_doe' },
+          { key: 'email',    label: 'Email',     type: 'email',    placeholder: 'john@example.com' },
+          { key: 'password', label: 'Password',  type: 'password', placeholder: 'Min. 6 characters' },
         ].map(f => (
           <div key={f.key} style={{ marginBottom: '14px' }}>
             <label style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: '#64748b', marginBottom: '6px', textTransform: 'uppercase' }}>{f.label}</label>
-            <input type={f.type} placeholder={f.placeholder} value={form[f.key]} onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
+            <input type={f.type} placeholder={f.placeholder} value={form[f.key]}
+              onChange={e => setForm(p => ({ ...p, [f.key]: e.target.value }))}
               style={{ width: '100%', padding: '10px 14px', borderRadius: '10px', border: '1.5px solid #e2e8f0', fontSize: '13px', outline: 'none', boxSizing: 'border-box' }} />
           </div>
         ))}
@@ -188,7 +183,8 @@ function AddUserModal({ onClose, onCreated }) {
                 padding: '10px 8px', borderRadius: '10px', cursor: 'pointer',
                 border: form.role === key ? `2px solid ${meta.color}` : '2px solid #e2e8f0',
                 background: form.role === key ? meta.bg : '#fff',
-                fontSize: '12px', fontWeight: '700', color: form.role === key ? meta.color : '#94a3b8',
+                fontSize: '12px', fontWeight: '700',
+                color: form.role === key ? meta.color : '#94a3b8',
                 transition: 'all 0.15s', textAlign: 'center',
               }}>
                 <div style={{ fontSize: '18px', marginBottom: '4px' }}>{meta.icon}</div>
@@ -210,7 +206,6 @@ function AddUserModal({ onClose, onCreated }) {
   );
 }
 
-// ── Reset Password Modal ──
 function ResetPasswordModal({ user, onClose }) {
   const [password, setPassword] = useState('');
   const [confirm, setConfirm] = useState('');
@@ -259,7 +254,6 @@ function ResetPasswordModal({ user, onClose }) {
   );
 }
 
-// ── Delete Modal ──
 function DeleteModal({ user, onClose, onDeleted }) {
   const [loading, setLoading] = useState(false);
   async function confirm() {
@@ -295,7 +289,6 @@ function DeleteModal({ user, onClose, onDeleted }) {
   );
 }
 
-// ── Role Dropdown ──
 function RoleDropdown({ user, onRoleChange, onNeedRestaurant }) {
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -326,13 +319,10 @@ function RoleDropdown({ user, onRoleChange, onNeedRestaurant }) {
   async function changeRole(newRole) {
     setOpen(false);
     if (newRole === current) return;
-
-    // Restaurant owner needs restaurant assignment
     if (newRole === 'restaurant_owner') {
       onNeedRestaurant(user);
       return;
     }
-
     setLoading(true);
     try {
       const token = localStorage.getItem('admin_token');
@@ -389,13 +379,12 @@ function RoleDropdown({ user, onRoleChange, onNeedRestaurant }) {
   );
 }
 
-// ── Main ──
 export default function AdminUsers() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [filterRole, setFilterRole] = useState('all');
-  const [modal, setModal] = useState(null); // { type, user? }
+  const [modal, setModal] = useState(null);
 
   useEffect(() => { load(); }, []);
 
@@ -429,21 +418,22 @@ export default function AdminUsers() {
   }
 
   const counts = {
-    all: users.length,
-    superuser: users.filter(u => u.is_staff || u.is_superuser).length,
+    all:              users.length,
+    superuser:        users.filter(u => u.is_staff || u.is_superuser).length,
     restaurant_owner: users.filter(u => !u.is_staff && u.profile_role === 'restaurant_owner').length,
-    courier: users.filter(u => !u.is_staff && u.profile_role === 'courier').length,
-    customer: users.filter(u => !u.is_staff && (!u.profile_role || u.profile_role === 'customer')).length,
+    courier:          users.filter(u => !u.is_staff && u.profile_role === 'courier').length,
+    customer:         users.filter(u => !u.is_staff && (!u.profile_role || u.profile_role === 'customer')).length,
   };
 
   const filtered = users.filter(u => {
-    const matchSearch = !search || u.username.toLowerCase().includes(search.toLowerCase()) || u.email?.toLowerCase().includes(search.toLowerCase());
+    const matchSearch = !search ||
+      u.username.toLowerCase().includes(search.toLowerCase()) ||
+      u.email?.toLowerCase().includes(search.toLowerCase());
     return matchSearch && (filterRole === 'all' || getUserRole(u) === filterRole);
   });
 
   return (
     <div>
-      {/* Header */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px' }}>
         <div>
           <h1 style={{ fontSize: '22px', fontWeight: '800' }}>Users</h1>
@@ -459,14 +449,13 @@ export default function AdminUsers() {
         </div>
       </div>
 
-      {/* Filter tabs */}
       <div style={{ display: 'flex', gap: '6px', marginBottom: '16px', flexWrap: 'wrap' }}>
         {[
-          { key: 'all', label: 'All' },
-          { key: 'superuser', label: '🛡️ Admin' },
+          { key: 'all',              label: 'All' },
+          { key: 'superuser',        label: '🛡️ Admin' },
           { key: 'restaurant_owner', label: '🍽️ Owner' },
-          { key: 'courier', label: '🛵 Courier' },
-          { key: 'customer', label: '👤 Customer' },
+          { key: 'courier',          label: '🛵 Courier' },
+          { key: 'customer',         label: '👤 Customer' },
         ].map(({ key, label }) => (
           <button key={key} onClick={() => setFilterRole(key)} style={{
             padding: '6px 14px', borderRadius: '20px', fontSize: '12px', fontWeight: '600',
@@ -479,18 +468,16 @@ export default function AdminUsers() {
         ))}
       </div>
 
-      {/* Search */}
       <div style={{ position: 'relative', marginBottom: '16px' }}>
         <Search size={14} color="#94a3b8" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }} />
         <input placeholder="Search by username or email..." value={search} onChange={e => setSearch(e.target.value)}
           style={{ width: '100%', padding: '10px 14px 10px 36px', borderRadius: '10px', border: '1px solid #e2e8f0', fontSize: '13px', background: '#fff', boxSizing: 'border-box', outline: 'none' }} />
       </div>
 
-      {/* Table */}
       <div style={{ background: '#fff', borderRadius: '16px', border: '1px solid #e2e8f0', overflow: 'visible' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
           <thead>
-            <tr style={{ background: '#f8fafc', borderRadius: '16px 16px 0 0' }}>
+            <tr style={{ background: '#f8fafc' }}>
               {['User', 'Email / Restaurant', 'Role', 'Joined', 'Actions'].map(h => (
                 <th key={h} style={{ padding: '12px 16px', textAlign: 'left', fontSize: '11px', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>{h}</th>
               ))}
@@ -526,11 +513,7 @@ export default function AdminUsers() {
                     ) : u.email || '—'}
                   </td>
                   <td style={{ padding: '12px 16px' }}>
-                    <RoleDropdown
-                      user={u}
-                      onRoleChange={handleRoleChange}
-                      onNeedRestaurant={u => setModal({ type: 'assign_restaurant', user: u })}
-                    />
+                    <RoleDropdown user={u} onRoleChange={handleRoleChange} onNeedRestaurant={u => setModal({ type: 'assign_restaurant', user: u })} />
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: '12px', color: '#94a3b8', whiteSpace: 'nowrap' }}>
                     {u.date_joined ? new Date(u.date_joined).toLocaleDateString('fr-MA') : '—'}
@@ -564,13 +547,16 @@ export default function AdminUsers() {
 
       <AnimatePresence>
         {modal?.type === 'add' && (
-          <AddUserModal onClose={() => setModal(null)} onCreated={u => {
-            setUsers(p => [u, ...p]);
-            if (u._pendingRestaurant) setModal({ type: 'assign_restaurant', user: u });
-          }} />
+          <AddUserModal
+            onClose={() => setModal(null)}
+            onCreated={u => {
+              setUsers(p => [{ ...u, profile_role: u.profile_role || 'customer' }, ...p]);
+              if (u._pendingRestaurant) setModal({ type: 'assign_restaurant', user: u });
+            }}
+          />
         )}
-        {modal?.type === 'reset' && <ResetPasswordModal user={modal.user} onClose={() => setModal(null)} />}
-        {modal?.type === 'delete' && <DeleteModal user={modal.user} onClose={() => setModal(null)} onDeleted={id => setUsers(p => p.filter(u => u.id !== id))} />}
+        {modal?.type === 'reset'             && <ResetPasswordModal user={modal.user} onClose={() => setModal(null)} />}
+        {modal?.type === 'delete'            && <DeleteModal user={modal.user} onClose={() => setModal(null)} onDeleted={id => setUsers(p => p.filter(u => u.id !== id))} />}
         {modal?.type === 'assign_restaurant' && <AssignRestaurantModal user={modal.user} onClose={() => setModal(null)} onAssigned={handleRestaurantAssigned} />}
       </AnimatePresence>
     </div>
