@@ -86,7 +86,7 @@ function OrderCard({ order, onStatusChange, updating }) {
             </p>
             <p style={{ fontSize: '12px', color: '#888', marginTop: '2px' }}>
               👤 {order.customer_username}
-              {order.items?.length > 0 && ` · ${order.items.length} article${order.items.length > 1 ? 's' : ''}`}
+              {order.order_items?.length > 0 && ` · ${order.order_items.length} article${order.order_items.length > 1 ? 's' : ''}`}
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -111,7 +111,7 @@ function OrderCard({ order, onStatusChange, updating }) {
 
               {/* Items */}
               <div style={{ marginBottom: '12px' }}>
-                {order.items?.map(item => (
+                {order.order_items?.map(item => (
                   <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '5px 0', borderBottom: '1px solid #f5f5f5' }}>
                     <span style={{ color: '#444', fontWeight: '500' }}>
                       <span style={{ display: 'inline-block', width: '20px', height: '20px', borderRadius: '5px', background: '#FFF3E8', color: '#FF6B00', fontSize: '10px', fontWeight: '800', textAlign: 'center', lineHeight: '20px', marginRight: '6px' }}>

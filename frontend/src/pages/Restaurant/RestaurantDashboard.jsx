@@ -157,7 +157,7 @@ export default function RestaurantDashboard() {
                         <p style={{ fontSize: '12px', color: 'var(--muted-fg)', margin: '10px 0 8px' }}>
                           📍 {o.delivery_address}
                         </p>
-                        {o.items?.map(item => (
+                        {o.order_items?.map(item => (
                           <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '3px 0' }}>
                             <span>{item.quantity}× {item.menu_item_name}</span>
                             <span style={{ fontWeight: '600' }}>{(item.price * item.quantity).toFixed(0)} MAD</span>

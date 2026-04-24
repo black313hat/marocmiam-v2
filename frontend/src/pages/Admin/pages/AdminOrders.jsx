@@ -242,10 +242,10 @@ export default function AdminOrders() {
                         </div>
 
                         {/* Items */}
-                        {o.items?.length > 0 && (
+                        {o.order_items?.length > 0 && (
                           <div style={{ marginBottom: '12px' }}>
                             <p style={{ fontSize: '11px', fontWeight: '700', color: '#94a3b8', marginBottom: '8px', textTransform: 'uppercase' }}>Items</p>
-                            {o.items.map(item => (
+                            {o.order_items.map(item => (
                               <div key={item.id} style={{
                                 display: 'flex', justifyContent: 'space-between',
                                 fontSize: '13px', padding: '5px 0',

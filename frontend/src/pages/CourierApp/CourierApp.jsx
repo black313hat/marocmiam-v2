@@ -397,7 +397,7 @@ export default function CourierApp() {
                       {/* Meta row */}
                       <div style={{ display: 'flex', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#888', fontWeight: '600' }}>
-                          <Package size={11} /> {order.items?.length || 0} articles
+                          <Package size={11} /> {order.order_items?.length || 0} articles
                         </span>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', color: '#888', fontWeight: '600' }}>
                           <Clock size={11} /> {new Date(order.created_at).toLocaleTimeString('fr-MA', { hour: '2-digit', minute: '2-digit' })}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getOrders } from '../../services/api';
 import { useNavigate } from 'react-router-dom';
-import { RefreshCw, ChevronDown, ChevronUp, MapPin, RotateCcw, Clock, Star } from 'lucide-react';
+import { RefreshCw, ChevronDown, ChevronUp, MapPin, Clock, Star } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useLang } from '../../context/LanguageContext';
@@ -35,7 +35,6 @@ function PulsingDot() {
 function OrderTimeline({ status }) {
   const currentIdx = STEPS.findIndex(s => s.key === status);
   const pct = Math.min((currentIdx / (STEPS.length - 1)) * 100, 100);
-
   return (
     <div style={{ margin: '14px 0 4px' }}>
       <div style={{ position: 'relative', height: '4px', background: '#F0F0F0', borderRadius: '4px', marginBottom: '12px' }}>
@@ -75,20 +74,18 @@ function SkeletonCard() {
 function ActiveOrderCard({ order, expanded, onToggle }) {
   const s = STATUS_META[order.status] || STATUS_META.pending;
   const isOpen = expanded === order.id;
+  const items = order.order_items || [];
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
       style={{ background: '#fff', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 6px 24px rgba(255,107,0,0.1)', border: '1.5px solid #FFE0C0' }}>
       <div style={{ height: '3px', background: 'linear-gradient(90deg, #FF6B00, #FF9A00, #FFC107)' }} />
-
       <div onClick={() => onToggle(order.id)} style={{ padding: '14px 16px', cursor: 'pointer' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '6px', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '11px', color: '#BBB', fontWeight: '600' }}>#{order.id}</span>
-              <span style={{ fontSize: '10px', fontWeight: '700', padding: '3px 9px', borderRadius: '20px', background: s.bg, color: s.color, border: `1px solid ${s.border}` }}>
-                {s.label}
-              </span>
+              <span style={{ fontSize: '10px', fontWeight: '700', padding: '3px 9px', borderRadius: '20px', background: s.bg, color: s.color, border: `1px solid ${s.border}` }}>{s.label}</span>
               <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10px', fontWeight: '700', color: '#FF6B00' }}>
                 <PulsingDot /> En direct
               </span>
@@ -99,7 +96,7 @@ function ActiveOrderCard({ order, expanded, onToggle }) {
             <p style={{ fontSize: '11px', color: '#BBB', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
               <Clock size={10} />
               {new Date(order.created_at).toLocaleDateString('fr-MA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-              {order.items?.length > 0 && <span>· {order.items.length} article{order.items.length > 1 ? 's' : ''}</span>}
+              {items.length > 0 && <span>· {items.length} article{items.length > 1 ? 's' : ''}</span>}
             </p>
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', flexShrink: 0 }}>
@@ -123,8 +120,8 @@ function ActiveOrderCard({ order, expanded, onToggle }) {
                 <p style={{ fontSize: '12px', color: '#666', lineHeight: 1.5, fontWeight: '500' }}>{order.delivery_address}</p>
               </div>
               <div style={{ marginBottom: '12px' }}>
-                {order.items?.map((item, idx) => (
-                  <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: idx < order.items.length - 1 ? '1px solid #F5F5F5' : 'none' }}>
+                {items.map((item, idx) => (
+                  <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: idx < items.length - 1 ? '1px solid #F5F5F5' : 'none' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ width: '20px', height: '20px', borderRadius: '5px', background: '#FFF3E8', color: '#FF6B00', fontSize: '10px', fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{item.quantity}</span>
                       <span style={{ fontSize: '13px', color: '#444', fontWeight: '500' }}>{item.menu_item_name}</span>
@@ -158,10 +155,8 @@ function PastOrderCard({ order, onReorder, expanded, onToggle }) {
   const s = STATUS_META[order.status] || STATUS_META.delivered;
   const isOpen = expanded === order.id;
   const isDelivered = order.status === 'delivered';
-  const isCancelled = order.status === 'cancelled';
-
-  // Items summary text
-  const itemsSummary = order.items?.map(i => `${i.quantity}x ${i.menu_item_name}`).join(', ') || '';
+  const items = order.order_items || [];
+  const itemsSummary = items.map(i => `${i.quantity}x ${i.menu_item_name}`).join(', ');
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
@@ -169,29 +164,24 @@ function PastOrderCard({ order, onReorder, expanded, onToggle }) {
 
       {/* Main row */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px' }}>
-        {/* Restaurant image or placeholder */}
-        <div style={{ width: '56px', height: '56px', borderRadius: '12px', background: '#FFF3E8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0, overflow: 'hidden' }}>
+        <div style={{ width: '56px', height: '56px', borderRadius: '12px', background: '#FFF3E8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
           🍽️
         </div>
-
-        {/* Info */}
-        <div style={{ flex: 1, minWidth: 0 }} onClick={() => onToggle(order.id)} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
+        <div onClick={() => onToggle(order.id)} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
             <p style={{ fontSize: '15px', fontWeight: '800', color: '#111', letterSpacing: '-0.01em' }}>{order.restaurant_name}</p>
             <span style={{ fontSize: '10px', fontWeight: '700', padding: '2px 7px', borderRadius: '20px', background: s.bg, color: s.color, flexShrink: 0 }}>
-              {isCancelled ? '✗ Annulée' : '✓ Livrée'}
+              {order.status === 'cancelled' ? '✗ Annulée' : '✓ Livrée'}
             </span>
           </div>
           <p style={{ fontSize: '12px', color: '#999', marginBottom: '3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-            {itemsSummary}
+            {itemsSummary || 'Aucun article'}
           </p>
           <p style={{ fontSize: '11px', color: '#BBB', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <Clock size={10} />
             {new Date(order.created_at).toLocaleDateString('fr-MA', { day: 'numeric', month: 'short', year: 'numeric' })}
           </p>
         </div>
-
-        {/* Reorder button */}
         {isDelivered && (
           <button onClick={() => onReorder(order.restaurant)} style={{
             padding: '8px 14px', borderRadius: '20px', border: 'none',
@@ -204,7 +194,7 @@ function PastOrderCard({ order, onReorder, expanded, onToggle }) {
         )}
       </div>
 
-      {/* Expand toggle */}
+      {/* Toggle */}
       <div onClick={() => onToggle(order.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px', borderTop: '1px solid #F5F5F5', cursor: 'pointer', background: '#FAFAFA' }}>
         <span style={{ fontSize: '11px', color: '#BBB', fontWeight: '600', marginRight: '4px' }}>
           {isOpen ? 'Masquer les détails' : 'Voir les détails'}
@@ -212,7 +202,7 @@ function PastOrderCard({ order, onReorder, expanded, onToggle }) {
         {isOpen ? <ChevronUp size={13} color="#BBB" /> : <ChevronDown size={13} color="#BBB" />}
       </div>
 
-      {/* Expanded details */}
+      {/* Expanded */}
       <AnimatePresence>
         {isOpen && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} style={{ overflow: 'hidden' }}>
@@ -224,17 +214,19 @@ function PastOrderCard({ order, onReorder, expanded, onToggle }) {
                 <p style={{ fontSize: '12px', color: '#666', lineHeight: 1.4 }}>{order.delivery_address}</p>
               </div>
 
-              {/* Items */}
-              <div style={{ marginBottom: '12px' }}>
-                {order.items?.map((item, idx) => (
-                  <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: idx < order.items.length - 1 ? '1px solid #F5F5F5' : 'none' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      <span style={{ width: '20px', height: '20px', borderRadius: '5px', background: '#FFF3E8', color: '#FF6B00', fontSize: '10px', fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{item.quantity}</span>
+              {/* Items — no prices */}
+              {items.length > 0 && (
+                <div style={{ marginBottom: '12px', background: '#F9F9F9', borderRadius: '10px', padding: '8px 12px', border: '1px solid #F0F0F0' }}>
+                  {items.map((item, idx) => (
+                    <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', borderBottom: idx < items.length - 1 ? '1px solid #F0F0F0' : 'none' }}>
+                      <span style={{ width: '20px', height: '20px', borderRadius: '5px', background: '#FFF3E8', color: '#FF6B00', fontSize: '10px', fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                        {item.quantity}
+                      </span>
                       <span style={{ fontSize: '13px', color: '#444', fontWeight: '500' }}>{item.menu_item_name}</span>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
 
               {/* Info cards */}
               <div style={{ display: 'flex', gap: '8px', marginBottom: isDelivered ? '12px' : '0' }}>
@@ -244,9 +236,7 @@ function PastOrderCard({ order, onReorder, expanded, onToggle }) {
                 </div>
                 <div style={{ background: '#F9F9F9', borderRadius: '10px', padding: '8px 10px', flex: 1 }}>
                   <p style={{ fontSize: '9px', fontWeight: '800', color: '#888', marginBottom: '3px', textTransform: 'uppercase' }}>💳 Paiement</p>
-                  <p style={{ fontSize: '12px', fontWeight: '700', color: '#111' }}>
-                    {order.payment_method === 'cash' ? '💵 Espèces' : '💳 Carte'}
-                  </p>
+                  <p style={{ fontSize: '12px', fontWeight: '700', color: '#111' }}>{order.payment_method === 'cash' ? '💵 Espèces' : '💳 Carte'}</p>
                 </div>
                 {order.courier_username && (
                   <div style={{ background: '#EFF6FF', borderRadius: '10px', padding: '8px 10px', flex: 1 }}>
@@ -256,13 +246,13 @@ function PastOrderCard({ order, onReorder, expanded, onToggle }) {
                 )}
               </div>
 
-              {/* Rate button */}
+              {/* Rate */}
               {isDelivered && (
                 <button onClick={() => toast('Notation à venir ⭐')} style={{
-                  width: '100%', padding: '10px', borderRadius: '12px',
-                  background: '#FFF3E8', color: '#FF6B00', fontWeight: '700', fontSize: '13px',
-                  border: '1.5px solid #FFE0C0', cursor: 'pointer', display: 'flex',
-                  alignItems: 'center', justifyContent: 'center', gap: '6px', fontFamily: 'inherit',
+                  width: '100%', padding: '10px', borderRadius: '12px', background: '#FFF3E8',
+                  color: '#FF6B00', fontWeight: '700', fontSize: '13px', border: '1.5px solid #FFE0C0',
+                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  gap: '6px', fontFamily: 'inherit',
                 }}>
                   <Star size={14} /> Noter cette commande
                 </button>
@@ -275,6 +265,7 @@ function PastOrderCard({ order, onReorder, expanded, onToggle }) {
   );
 }
 
+// ── Main ──
 export default function Orders() {
   const [orders, setOrders]     = useState([]);
   const [loading, setLoading]   = useState(true);
@@ -373,7 +364,7 @@ export default function Orders() {
           </motion.div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {displayed.map((order, i) => {
+            {displayed.map(order => {
               const isActive = !['delivered', 'cancelled'].includes(order.status);
               return isActive ? (
                 <ActiveOrderCard key={order.id} order={order} expanded={expanded} onToggle={toggleExpanded} />

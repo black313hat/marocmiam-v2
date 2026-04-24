@@ -155,9 +155,9 @@ export default function AdminOrders() {
                         <p style={{ fontSize: '12px', color: 'var(--muted-fg)', margin: '12px 0 8px', fontWeight: '600' }}>
                           📍 {o.delivery_address}
                         </p>
-                        {o.items?.length > 0 && (
+                        {o.order_items?.length > 0 && (
                           <div style={{ marginBottom: '12px' }}>
-                            {o.items.map(item => (
+                            {o.order_items.map(item => (
                               <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', padding: '3px 0' }}>
                                 <span>{item.quantity}x {item.menu_item_name}</span>
                                 <span style={{ fontWeight: '600' }}>{parseFloat(item.price * item.quantity).toFixed(0)} MAD</span>
