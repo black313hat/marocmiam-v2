@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import { useLang } from '../../context/LanguageContext';
 
 const STEPS = [
-  { key: 'pending',   emoji: '📋', label: 'Reçue' },
+  { key: 'pending', emoji: '📋', label: 'Reçue' },
   { key: 'confirmed', emoji: '✅', label: 'Confirmée' },
   { key: 'preparing', emoji: '👨‍🍳', label: 'Préparation' },
   { key: 'picked_up', emoji: '🛵', label: 'En route' },
@@ -15,7 +15,7 @@ const STEPS = [
 ];
 
 const STATUS_META = {
-  pending:   { color: '#F59E0B', bg: '#FFFBEB', border: '#FDE68A', label: 'En attente' },
+  pending: { color: '#F59E0B', bg: '#FFFBEB', border: '#FDE68A', label: 'En attente' },
   confirmed: { color: '#3B82F6', bg: '#EFF6FF', border: '#BFDBFE', label: 'Confirmée' },
   preparing: { color: '#8B5CF6', bg: '#F5F3FF', border: '#DDD6FE', label: 'En préparation' },
   picked_up: { color: '#06B6D4', bg: '#ECFEFF', border: '#A5F3FC', label: 'En route' },
@@ -72,7 +72,7 @@ function OrderTimeline({ status }) {
       {/* Steps */}
       <div style={{ display: 'flex', justifyContent: 'space-between' }}>
         {STEPS.map((step, i) => {
-          const done   = i <= currentIdx;
+          const done = i <= currentIdx;
           const active = i === currentIdx;
           return (
             <div key={step.key} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px', flex: 1 }}>
@@ -125,10 +125,10 @@ function SkeletonCard() {
 }
 
 export default function Orders() {
-  const [orders, setOrders]   = useState([]);
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(null);
-  const [tab, setTab]         = useState('all'); // all | active | past
+  const [tab, setTab] = useState('all'); // all | active | past
   const navigate = useNavigate();
   const { t, isRTL } = useLang();
 
@@ -151,8 +151,8 @@ export default function Orders() {
   }
 
   const activeOrders = orders.filter(o => !['delivered', 'cancelled'].includes(o.status));
-  const pastOrders   = orders.filter(o => ['delivered', 'cancelled'].includes(o.status));
-  const displayed    = tab === 'active' ? activeOrders : tab === 'past' ? pastOrders : orders;
+  const pastOrders = orders.filter(o => ['delivered', 'cancelled'].includes(o.status));
+  const displayed = tab === 'active' ? activeOrders : tab === 'past' ? pastOrders : orders;
 
   return (
     <div style={{
@@ -194,9 +194,9 @@ export default function Orders() {
         {/* Tabs */}
         <div style={{ display: 'flex', gap: '6px', paddingBottom: '0' }}>
           {[
-            { key: 'all',    label: 'Tout',    count: orders.length },
+            { key: 'all', label: 'Tout', count: orders.length },
             { key: 'active', label: 'En cours', count: activeOrders.length },
-            { key: 'past',   label: 'Passées',  count: pastOrders.length },
+            { key: 'past', label: 'Passées', count: pastOrders.length },
           ].map(({ key, label, count }) => (
             <button
               key={key}
@@ -257,9 +257,9 @@ export default function Orders() {
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {displayed.map((order, i) => {
-              const s       = STATUS_META[order.status] || STATUS_META.pending;
+              const s = STATUS_META[order.status] || STATUS_META.pending;
               const isActive = !['delivered', 'cancelled'].includes(order.status);
-              const isOpen  = expanded === order.id;
+              const isOpen = expanded === order.id;
 
               return (
                 <motion.div
@@ -450,6 +450,27 @@ export default function Orders() {
                           </div>
 
                           {/* Actions */}
+                          {/* Past order info cards */}
+                          {!isActive && (
+                            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                              <div style={{ background: '#FFF3E8', borderRadius: '10px', padding: '8px 10px', flex: 1 }}>
+                                <p style={{ fontSize: '9px', fontWeight: '800', color: '#FF6B00', marginBottom: '3px', textTransform: 'uppercase' }}>🍽️ Restaurant</p>
+                                <p style={{ fontSize: '12px', fontWeight: '700', color: '#111' }}>{order.restaurant_name}</p>
+                              </div>
+                              <div style={{ background: '#F9F9F9', borderRadius: '10px', padding: '8px 10px', flex: 1 }}>
+                                <p style={{ fontSize: '9px', fontWeight: '800', color: '#888', marginBottom: '3px', textTransform: 'uppercase' }}>💳 Paiement</p>
+                                <p style={{ fontSize: '12px', fontWeight: '700', color: '#111' }}>
+                                  {order.payment_method === 'cash' ? '💵 Espèces' : '💳 Carte'}
+                                </p>
+                              </div>
+                              {order.courier_username && (
+                                <div style={{ background: '#EFF6FF', borderRadius: '10px', padding: '8px 10px', flex: 1 }}>
+                                  <p style={{ fontSize: '9px', fontWeight: '800', color: '#2563eb', marginBottom: '3px', textTransform: 'uppercase' }}>🛵 Livreur</p>
+                                  <p style={{ fontSize: '12px', fontWeight: '700', color: '#111' }}>{order.courier_username}</p>
+                                </div>
+                              )}
+                            </div>
+                          )}
                           {order.status === 'delivered' && (
                             <div style={{ display: 'flex', gap: '10px' }}>
                               <button

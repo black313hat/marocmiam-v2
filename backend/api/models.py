@@ -93,7 +93,7 @@ class Courier(models.Model):
     vehicle = models.CharField(max_length=50, blank=True, default='moto')
     deliveries_count = models.IntegerField(default=0)
     earnings_total = models.DecimalField(max_digits=10, decimal_places=2, default=0)
-
+    delivery_history = models.ManyToManyField('Order', blank=True, related_name='delivered_by')
     def __str__(self):
         return f"Courier: {self.user.username}"
     

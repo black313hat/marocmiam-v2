@@ -57,17 +57,27 @@ class OrderItemSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     customer_username = serializers.CharField(source='customer.username', read_only=True)
     restaurant_name = serializers.CharField(source='restaurant.name', read_only=True)
+    restaurant_lat = serializers.FloatField(source='restaurant.lat', read_only=True)
+    restaurant_lng = serializers.FloatField(source='restaurant.lng', read_only=True)
+    courier_username = serializers.SerializerMethodField()
     items = OrderItemSerializer(many=True, read_only=True, source='orderitem_set')
 
     class Meta:
         model = Order
         fields = [
-            'id', 'customer_username', 'restaurant_name', 'status',
+            'id', 'customer_username', 'restaurant_name',
+            'restaurant_lat', 'restaurant_lng',
+            'courier_username', 'status',
             'total_price', 'delivery_fee', 'service_fee', 'payment_method',
             'delivery_address', 'delivery_lat', 'delivery_lng',
             'distance_km', 'commission_rate', 'items', 'created_at',
         ]
 
+    def get_courier_username(self, obj):
+        try:
+            return obj.assigned_courier.first().user.username
+        except:
+            return None
 
 class CourierSerializer(serializers.ModelSerializer):
     username = serializers.CharField(source='user.username', read_only=True)

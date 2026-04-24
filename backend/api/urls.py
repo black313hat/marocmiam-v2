@@ -69,7 +69,7 @@ urlpatterns = [
     path('courier/active/', views.courier_active_order),
     path('courier/earnings/', views.courier_earnings),
     path('courier/update-location/', views.courier_update_location),
-
+    path('courier/history/', views.courier_history),
     # Restaurant owner dashboard
     path('owner/restaurant/', views.owner_my_restaurant),
     path('owner/restaurant/update/', views.owner_update_restaurant),

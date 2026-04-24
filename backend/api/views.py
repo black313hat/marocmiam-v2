@@ -505,6 +505,7 @@ def courier_deliver_order(request, order_id):
         courier.deliveries_count += 1
         courier.earnings_total += order.total_price * Decimal('0.67')
         courier.save()
+        courier.delivery_history.add(order)
         return Response({'status': 'Order delivered successfully'})
     except Courier.DoesNotExist:
         return Response({'error': 'Not a courier'}, status=404)
@@ -955,3 +956,37 @@ def assign_restaurant_to_owner(request, pk):
 
 # Add to urls.py:
 # path('admin/users/<int:pk>/assign-restaurant/', views.assign_restaurant_to_owner),
+
+# @api_view(['GET'])
+# @permission_classes([permissions.IsAuthenticated])
+# def courier_history(request):
+#     try:
+#         courier = Courier.objects.get(user=request.user)
+#         # Get all orders where this courier was assigned
+#         # Since current_order is on Courier, we need a different approach
+#         # Use the earnings count - get delivered orders from the courier's deliveries
+#         orders = Order.objects.filter(
+#             assigned_courier=courier,
+#             status='delivered'
+#         ).order_by('-created_at')
+        
+#         # If empty, try getting all delivered orders the courier touched
+#         if not orders.exists():
+#             # Fallback: get recent delivered orders (temporary fix)
+#             orders = Order.objects.filter(
+#                 status='delivered'
+#             ).order_by('-created_at')[:courier.deliveries_count or 0]
+        
+#         return Response(OrderSerializer(orders, many=True).data)
+#     except Courier.DoesNotExist:
+#         return Response({'error': 'Not a courier'}, status=404)
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def courier_history(request):
+    try:
+        courier = Courier.objects.get(user=request.user)
+        orders = courier.delivery_history.all().order_by('-created_at')
+        return Response(OrderSerializer(orders, many=True).data)
+    except Courier.DoesNotExist:
+        return Response({'error': 'Not a courier'}, status=404)
