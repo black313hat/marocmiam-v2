@@ -1,6 +1,8 @@
 from rest_framework import generics, status, permissions
 import os
 import requests as http_requests
+import firebase_admin
+from firebase_admin import credentials, messaging as fb_messaging
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -191,6 +193,12 @@ def create_full_order(request):
                 price=float(item['price']),
             )
 
+        # Notify restaurant owner of new order
+        try:
+            notify_new_order(order)
+        except Exception as notif_err:
+            print(f"Notification error: {notif_err}")
+
         return Response(OrderSerializer(order).data, status=201)
 
     except Exception as e:
@@ -287,39 +295,88 @@ def send_notification_to_user(request):
     return Response({'status': 'sent'})
 
 
+# ── Firebase Admin SDK init ──
+_firebase_initialized = False
+
+def _init_firebase():
+    global _firebase_initialized
+    if not _firebase_initialized:
+        try:
+            cred_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'firebase-service-account.json')
+            cred_path = os.path.abspath(cred_path)
+            if os.path.exists(cred_path):
+                cred = credentials.Certificate(cred_path)
+                if not firebase_admin._apps:
+                    firebase_admin.initialize_app(cred)
+                _firebase_initialized = True
+                print('Firebase Admin SDK initialized')
+            else:
+                print(f'Firebase service account not found at {cred_path}')
+        except Exception as e:
+            print(f'Firebase init error: {e}')
+
+
 def send_fcm_notification(tokens, title, body, data=None):
-    FCM_SERVER_KEY = os.environ.get('FCM_SERVER_KEY', '')
-    if not FCM_SERVER_KEY:
+    _init_firebase()
+    if not _firebase_initialized:
+        print('Firebase not initialized, skipping notification')
         return
-    payload = {
-        'registration_ids': tokens,
-        'notification': {'title': title, 'body': body, 'icon': 'https://marocmiam.vercel.app/icon.png'},
-        'data': data or {},
-    }
-    try:
-        res = http_requests.post(
-            'https://fcm.googleapis.com/fcm/send',
-            json=payload,
-            headers={'Authorization': f'key={FCM_SERVER_KEY}', 'Content-Type': 'application/json'}
-        )
-        print(f"FCM response: {res.status_code}")
-    except Exception as e:
-        print(f"FCM error: {e}")
+    for token in tokens:
+        try:
+            message = fb_messaging.Message(
+                notification=fb_messaging.Notification(title=title, body=body),
+                data={k: str(v) for k, v in (data or {}).items()},
+                token=token,
+                android=fb_messaging.AndroidConfig(priority='high'),
+                webpush=fb_messaging.WebpushConfig(
+                    notification=fb_messaging.WebpushNotification(
+                        title=title,
+                        body=body,
+                        icon='https://marocmiam.duckdns.org/favicon.svg',
+                    ),
+                    fcm_options=fb_messaging.WebpushFCMOptions(
+                        link='https://marocmiam.duckdns.org/orders'
+                    ),
+                ),
+            )
+            fb_messaging.send(message)
+            print(f'FCM sent to {token[:20]}...')
+        except Exception as e:
+            print(f'FCM error for token {token[:20]}: {e}')
 
 
 def notify_order_status(order):
     status_messages = {
-        'confirmed': ('Order Confirmed', f'Your order #{order.id} has been confirmed!'),
-        'preparing': ('Being Prepared', f'Your order #{order.id} is being prepared.'),
-        'picked_up': ('On the Way', f'Your order #{order.id} is on its way!'),
-        'delivered': ('Delivered', f'Your order #{order.id} has been delivered. Enjoy!'),
-        'cancelled': ('Order Cancelled', f'Your order #{order.id} has been cancelled.'),
+        'confirmed': ('✅ Commande confirmée', f'Votre commande #{order.id} a été confirmée!'),
+        'preparing': ('👨‍🍳 En préparation', f'Votre commande #{order.id} est en cours de préparation'),
+        'picked_up': ('🛵 En route!', f'Votre commande #{order.id} est en route!'),
+        'delivered': ('🎉 Livrée!', f'Votre commande #{order.id} a été livrée. Bon appétit!'),
+        'cancelled': ('❌ Annulée', f'Votre commande #{order.id} a été annulée.'),
     }
     if order.status in status_messages:
         title, body = status_messages[order.status]
-        tokens = FCMToken.objects.filter(user=order.customer).values_list('token', flat=True)
+        tokens = list(FCMToken.objects.filter(user=order.customer).values_list('token', flat=True))
         if tokens:
-            send_fcm_notification(list(tokens), title, body, {'order_id': str(order.id)})
+            send_fcm_notification(tokens, title, body, {'order_id': str(order.id), 'status': order.status})
+
+
+def notify_new_order(order):
+    try:
+        owner_profile = UserProfile.objects.filter(
+            role='restaurant_owner',
+            restaurant=order.restaurant
+        ).first()
+        if owner_profile:
+            tokens = list(FCMToken.objects.filter(user=owner_profile.user).values_list('token', flat=True))
+            if tokens:
+                send_fcm_notification(
+                    tokens,
+                    '🔔 Nouvelle commande!',
+                    f'Commande #{order.id} — {order.total_price} MAD',
+                    {'order_id': str(order.id), 'type': 'new_order'}
+                )
+    except Exception as e:
+        print(f'Notify owner error: {e}')
 
 
 # ───── USER LIST (legacy) ─────
