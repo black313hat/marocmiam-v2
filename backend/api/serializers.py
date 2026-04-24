@@ -48,6 +48,7 @@ class RestaurantSerializer(serializers.ModelSerializer):
 
 class OrderItemSerializer(serializers.ModelSerializer):
     menu_item_name = serializers.CharField(source='menu_item.name', read_only=True)
+    menu_item_image = serializers.CharField(source='menu_item.image', read_only=True)
 
     class Meta:
         model = OrderItem
@@ -56,13 +57,15 @@ class OrderItemSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     customer_username = serializers.CharField(source='customer.username', read_only=True)
     restaurant_name = serializers.CharField(source='restaurant.name', read_only=True)
+    restaurant_id = serializers.IntegerField(source='restaurant.id', read_only=True)
+    restaurant_image = serializers.CharField(source='restaurant.image_url', read_only=True)
     courier_username = serializers.SerializerMethodField()
     order_items = OrderItemSerializer(many=True, read_only=True, source='items')
 
     class Meta:
         model = Order
         fields = [
-            'id', 'customer_username', 'restaurant_name',
+            'id', 'customer_username', 'restaurant_name', 'restaurant_id', 'restaurant_image',
             'courier_username', 'status',
             'total_price', 'delivery_fee', 'service_fee', 'payment_method',
             'delivery_address', 'delivery_lat', 'delivery_lng',

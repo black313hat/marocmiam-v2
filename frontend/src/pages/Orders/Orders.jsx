@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import { useLang } from '../../context/LanguageContext';
 
 const STEPS = [
-  { key: 'pending',   emoji: '📋', label: 'Reçue' },
+  { key: 'pending', emoji: '📋', label: 'Reçue' },
   { key: 'confirmed', emoji: '✅', label: 'Confirmée' },
   { key: 'preparing', emoji: '👨‍🍳', label: 'Préparation' },
   { key: 'picked_up', emoji: '🛵', label: 'En route' },
@@ -15,7 +15,7 @@ const STEPS = [
 ];
 
 const STATUS_META = {
-  pending:   { color: '#F59E0B', bg: '#FFFBEB', border: '#FDE68A', label: 'En attente' },
+  pending: { color: '#F59E0B', bg: '#FFFBEB', border: '#FDE68A', label: 'En attente' },
   confirmed: { color: '#3B82F6', bg: '#EFF6FF', border: '#BFDBFE', label: 'Confirmée' },
   preparing: { color: '#8B5CF6', bg: '#F5F3FF', border: '#DDD6FE', label: 'En préparation' },
   picked_up: { color: '#06B6D4', bg: '#ECFEFF', border: '#A5F3FC', label: 'En route' },
@@ -164,8 +164,15 @@ function PastOrderCard({ order, onReorder, expanded, onToggle }) {
 
       {/* Main row */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px' }}>
-        <div style={{ width: '56px', height: '56px', borderRadius: '12px', background: '#FFF3E8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0 }}>
-          🍽️
+        <div style={{ width: '56px', height: '56px', borderRadius: '12px', background: '#FFF3E8', flexShrink: 0, overflow: 'hidden' }}>
+          {order.restaurant_image ? (
+            <img src={order.restaurant_image} alt={order.restaurant_name}
+              style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+              onError={e => { e.target.style.display = 'none'; }}
+            />
+          ) : (
+            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>🍽️</div>
+          )}
         </div>
         <div onClick={() => onToggle(order.id)} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
@@ -267,11 +274,11 @@ function PastOrderCard({ order, onReorder, expanded, onToggle }) {
 
 // ── Main ──
 export default function Orders() {
-  const [orders, setOrders]     = useState([]);
-  const [loading, setLoading]   = useState(true);
+  const [orders, setOrders] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [expanded, setExpanded] = useState(null);
-  const [tab, setTab]           = useState('all');
-  const navigate  = useNavigate();
+  const [tab, setTab] = useState('all');
+  const navigate = useNavigate();
   const { t, isRTL } = useLang();
 
   useEffect(() => {
@@ -297,8 +304,8 @@ export default function Orders() {
   }
 
   const activeOrders = orders.filter(o => !['delivered', 'cancelled'].includes(o.status));
-  const pastOrders   = orders.filter(o => ['delivered', 'cancelled'].includes(o.status));
-  const displayed    = tab === 'active' ? activeOrders : tab === 'past' ? pastOrders : orders;
+  const pastOrders = orders.filter(o => ['delivered', 'cancelled'].includes(o.status));
+  const displayed = tab === 'active' ? activeOrders : tab === 'past' ? pastOrders : orders;
 
   return (
     <div style={{ background: '#F7F7F8', minHeight: '100vh', paddingBottom: '90px', direction: isRTL ? 'rtl' : 'ltr', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
@@ -321,9 +328,9 @@ export default function Orders() {
         </div>
         <div style={{ display: 'flex', gap: '6px' }}>
           {[
-            { key: 'all',    label: 'Tout',    count: orders.length },
+            { key: 'all', label: 'Tout', count: orders.length },
             { key: 'active', label: 'En cours', count: activeOrders.length },
-            { key: 'past',   label: 'Passées',  count: pastOrders.length },
+            { key: 'past', label: 'Passées', count: pastOrders.length },
           ].map(({ key, label, count }) => (
             <button key={key} onClick={() => setTab(key)} style={{
               flex: 1, padding: '10px 0 14px', background: 'none', border: 'none', cursor: 'pointer',
@@ -369,7 +376,7 @@ export default function Orders() {
               return isActive ? (
                 <ActiveOrderCard key={order.id} order={order} expanded={expanded} onToggle={toggleExpanded} />
               ) : (
-                <PastOrderCard key={order.id} order={order} expanded={expanded} onToggle={toggleExpanded} onReorder={id => navigate(`/restaurant/${id}`)} />
+                <PastOrderCard key={order.id} order={order} expanded={expanded} onToggle={toggleExpanded} onReorder={() => navigate(`/restaurant/${order.restaurant_id}`)} />
               );
             })}
           </div>
