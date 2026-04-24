@@ -3,10 +3,17 @@ from django.contrib.auth.models import User
 from .models import Restaurant, MenuItem, Order, OrderItem, Courier, UserProfile
 
 class UserSerializer(serializers.ModelSerializer):
+    profile_role = serializers.SerializerMethodField()
+    
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_staff', 'is_superuser']
-
+        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_staff', 'is_superuser', 'profile_role']
+    
+    def get_profile_role(self, obj):
+        try:
+            return obj.profile.role
+        except:
+            return 'customer'
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)
 

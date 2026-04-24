@@ -51,13 +51,14 @@ export default function Profile() {
     ? `${user.first_name} ${user.last_name}`
     : user.username;
 
+  const profileRole = user.profile_role || 'customer';
+
   const menuItems = [
-    { icon: ShoppingBag, label: t('my_orders'),            sub: t('my_orders_sub'),            path: '/orders',          color: '#FF6B00', bg: '#FFF3E8' },
-    { icon: Store,       label: t('restaurant_dashboard'), sub: t('restaurant_dashboard_sub'), path: '/restaurant-owner', color: '#8B5CF6', bg: '#F5F3FF' },
-    { icon: Bike,        label: t('courier_dashboard'),    sub: t('courier_dashboard_sub'),    path: '/courier-app',     color: '#06B6D4', bg: '#ECFEFF' },
+    { icon: ShoppingBag, label: t('my_orders'), sub: t('my_orders_sub'), path: '/orders', color: '#FF6B00', bg: '#FFF3E8' },
+    ...(profileRole === 'restaurant_owner' ? [{ icon: Store, label: t('restaurant_dashboard'), sub: t('restaurant_dashboard_sub'), path: '/restaurant-owner', color: '#8B5CF6', bg: '#F5F3FF' }] : []),
+    ...(profileRole === 'courier' ? [{ icon: Bike, label: t('courier_dashboard'), sub: t('courier_dashboard_sub'), path: '/courier-app', color: '#06B6D4', bg: '#ECFEFF' }] : []),
     ...(user.is_staff ? [{ icon: Shield, label: t('admin_panel'), sub: t('admin_panel_sub'), path: '/admin-panel', color: '#00A651', bg: 'rgba(0,166,81,0.08)' }] : []),
   ];
-
   return (
     <div style={{
       minHeight: '100vh', background: '#F7F7F8', paddingBottom: '90px',
@@ -119,8 +120,8 @@ export default function Profile() {
       <div style={{ padding: '16px', animation: 'slideUp 0.4s ease 0.05s both' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
           {[
-            { label: 'Panier',   value: itemCount,                                      icon: '🛒', color: '#FF6B00' },
-            { label: 'Compte',   value: user.is_staff ? 'Admin' : 'Client',             icon: '👤', color: '#00A651' },
+            { label: 'Panier', value: itemCount, icon: '🛒', color: '#FF6B00' },
+            { label: 'Compte', value: user.is_staff ? 'Admin' : 'Client', icon: '👤', color: '#00A651' },
           ].map((s, i) => (
             <div key={i} style={{
               background: '#fff', borderRadius: '16px', padding: '16px',
