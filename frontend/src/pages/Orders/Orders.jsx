@@ -7,7 +7,7 @@ import toast from 'react-hot-toast';
 import { useLang } from '../../context/LanguageContext';
 
 const STEPS = [
-  { key: 'pending', emoji: '📋', label: 'Reçue' },
+  { key: 'pending',   emoji: '📋', label: 'Reçue' },
   { key: 'confirmed', emoji: '✅', label: 'Confirmée' },
   { key: 'preparing', emoji: '👨‍🍳', label: 'Préparation' },
   { key: 'picked_up', emoji: '🛵', label: 'En route' },
@@ -15,7 +15,7 @@ const STEPS = [
 ];
 
 const STATUS_META = {
-  pending: { color: '#F59E0B', bg: '#FFFBEB', border: '#FDE68A', label: 'En attente' },
+  pending:   { color: '#F59E0B', bg: '#FFFBEB', border: '#FDE68A', label: 'En attente' },
   confirmed: { color: '#3B82F6', bg: '#EFF6FF', border: '#BFDBFE', label: 'Confirmée' },
   preparing: { color: '#8B5CF6', bg: '#F5F3FF', border: '#DDD6FE', label: 'En préparation' },
   picked_up: { color: '#06B6D4', bg: '#ECFEFF', border: '#A5F3FC', label: 'En route' },
@@ -34,16 +34,6 @@ function PulsingDot() {
 
 function OrderTimeline({ status }) {
   const currentIdx = STEPS.findIndex(s => s.key === status);
-
-  if (status === 'cancelled') {
-    return (
-      <div style={{ background: '#FEF2F2', borderRadius: '12px', padding: '10px 14px', display: 'flex', alignItems: 'center', gap: '8px', margin: '14px 0 4px', border: '1px solid #FECACA' }}>
-        <span style={{ fontSize: '16px' }}>❌</span>
-        <span style={{ fontSize: '13px', fontWeight: '700', color: '#EF4444' }}>Commande annulée</span>
-      </div>
-    );
-  }
-
   const pct = Math.min((currentIdx / (STEPS.length - 1)) * 100, 100);
 
   return (
@@ -73,20 +63,224 @@ function OrderTimeline({ status }) {
 
 function SkeletonCard() {
   return (
-    <div style={{ background: '#fff', borderRadius: '20px', padding: '16px', boxShadow: '0 2px 12px rgba(0,0,0,0.05)' }}>
-      {[80, 120, 50].map((w, i) => (
-        <div key={i} style={{ height: i === 1 ? '14px' : '12px', width: `${w}%`, maxWidth: `${w * 2.8}px`, background: 'linear-gradient(90deg, #F0F0F0 25%, #E8E8E8 50%, #F0F0F0 75%)', backgroundSize: '200% 100%', borderRadius: '6px', marginBottom: '10px', animation: 'shimmer 1.5s infinite' }} />
+    <div style={{ background: '#fff', borderRadius: '16px', padding: '16px', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+      {[60, 100, 40].map((w, i) => (
+        <div key={i} style={{ height: '12px', width: `${w}%`, background: 'linear-gradient(90deg, #F0F0F0 25%, #E8E8E8 50%, #F0F0F0 75%)', backgroundSize: '200% 100%', borderRadius: '6px', marginBottom: '10px', animation: 'shimmer 1.5s infinite' }} />
       ))}
     </div>
   );
 }
 
+// ── Active Order Card ──
+function ActiveOrderCard({ order, expanded, onToggle }) {
+  const s = STATUS_META[order.status] || STATUS_META.pending;
+  const isOpen = expanded === order.id;
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
+      style={{ background: '#fff', borderRadius: '20px', overflow: 'hidden', boxShadow: '0 6px 24px rgba(255,107,0,0.1)', border: '1.5px solid #FFE0C0' }}>
+      <div style={{ height: '3px', background: 'linear-gradient(90deg, #FF6B00, #FF9A00, #FFC107)' }} />
+
+      <div onClick={() => onToggle(order.id)} style={{ padding: '14px 16px', cursor: 'pointer' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '6px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '11px', color: '#BBB', fontWeight: '600' }}>#{order.id}</span>
+              <span style={{ fontSize: '10px', fontWeight: '700', padding: '3px 9px', borderRadius: '20px', background: s.bg, color: s.color, border: `1px solid ${s.border}` }}>
+                {s.label}
+              </span>
+              <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10px', fontWeight: '700', color: '#FF6B00' }}>
+                <PulsingDot /> En direct
+              </span>
+            </div>
+            <p style={{ fontSize: '16px', fontWeight: '800', color: '#111', marginBottom: '4px', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {order.restaurant_name}
+            </p>
+            <p style={{ fontSize: '11px', color: '#BBB', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <Clock size={10} />
+              {new Date(order.created_at).toLocaleDateString('fr-MA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+              {order.items?.length > 0 && <span>· {order.items.length} article{order.items.length > 1 ? 's' : ''}</span>}
+            </p>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', flexShrink: 0 }}>
+            <span style={{ fontWeight: '900', color: '#FF6B00', fontSize: '17px', letterSpacing: '-0.02em' }}>
+              {parseFloat(order.total_price).toFixed(0)} MAD
+            </span>
+            <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: '#F5F5F5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              {isOpen ? <ChevronUp size={14} color="#999" /> : <ChevronDown size={14} color="#999" />}
+            </div>
+          </div>
+        </div>
+        <OrderTimeline status={order.status} />
+      </div>
+
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} style={{ overflow: 'hidden' }}>
+            <div style={{ padding: '0 16px 16px', borderTop: '1px solid #F5F5F5' }}>
+              <div style={{ background: '#F9F9F9', borderRadius: '12px', padding: '11px 13px', margin: '12px 0', display: 'flex', alignItems: 'flex-start', gap: '8px', border: '1px solid #F0F0F0' }}>
+                <MapPin size={14} color="#FF6B00" style={{ flexShrink: 0, marginTop: '1px' }} />
+                <p style={{ fontSize: '12px', color: '#666', lineHeight: 1.5, fontWeight: '500' }}>{order.delivery_address}</p>
+              </div>
+              <div style={{ marginBottom: '12px' }}>
+                {order.items?.map((item, idx) => (
+                  <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: idx < order.items.length - 1 ? '1px solid #F5F5F5' : 'none' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ width: '20px', height: '20px', borderRadius: '5px', background: '#FFF3E8', color: '#FF6B00', fontSize: '10px', fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{item.quantity}</span>
+                      <span style={{ fontSize: '13px', color: '#444', fontWeight: '500' }}>{item.menu_item_name}</span>
+                    </div>
+                    <span style={{ fontSize: '13px', fontWeight: '700', color: '#222' }}>{(item.price * item.quantity).toFixed(0)} MAD</span>
+                  </div>
+                ))}
+              </div>
+              <div style={{ background: '#F9F9F9', borderRadius: '12px', padding: '11px 13px', border: '1px solid #F0F0F0' }}>
+                {order.delivery_fee > 0 && (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#888', marginBottom: '5px' }}>
+                    <span>🛵 Livraison</span><span>{parseFloat(order.delivery_fee).toFixed(0)} MAD</span>
+                  </div>
+                )}
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', fontWeight: '900', paddingTop: '6px', borderTop: '1px solid #EBEBEB' }}>
+                  <span style={{ color: '#111' }}>Total</span>
+                  <span style={{ color: '#FF6B00' }}>{parseFloat(order.total_price).toFixed(0)} MAD</span>
+                </div>
+                <p style={{ fontSize: '11px', color: '#AAA', marginTop: '5px' }}>{order.payment_method === 'cash' ? '💵 Espèces' : '💳 Carte'}</p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+// ── Past Order Card (Glovo style) ──
+function PastOrderCard({ order, onReorder, expanded, onToggle }) {
+  const s = STATUS_META[order.status] || STATUS_META.delivered;
+  const isOpen = expanded === order.id;
+  const isDelivered = order.status === 'delivered';
+  const isCancelled = order.status === 'cancelled';
+
+  // Items summary text
+  const itemsSummary = order.items?.map(i => `${i.quantity}x ${i.menu_item_name}`).join(', ') || '';
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
+      style={{ background: '#fff', borderRadius: '16px', overflow: 'hidden', border: '1.5px solid #F0F0F0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
+
+      {/* Main row */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px' }}>
+        {/* Restaurant image or placeholder */}
+        <div style={{ width: '56px', height: '56px', borderRadius: '12px', background: '#FFF3E8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px', flexShrink: 0, overflow: 'hidden' }}>
+          🍽️
+        </div>
+
+        {/* Info */}
+        <div style={{ flex: 1, minWidth: 0 }} onClick={() => onToggle(order.id)} style={{ flex: 1, minWidth: 0, cursor: 'pointer' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+            <p style={{ fontSize: '15px', fontWeight: '800', color: '#111', letterSpacing: '-0.01em' }}>{order.restaurant_name}</p>
+            <span style={{ fontSize: '10px', fontWeight: '700', padding: '2px 7px', borderRadius: '20px', background: s.bg, color: s.color, flexShrink: 0 }}>
+              {isCancelled ? '✗ Annulée' : '✓ Livrée'}
+            </span>
+          </div>
+          <p style={{ fontSize: '12px', color: '#999', marginBottom: '3px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {itemsSummary}
+          </p>
+          <p style={{ fontSize: '11px', color: '#BBB', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Clock size={10} />
+            {new Date(order.created_at).toLocaleDateString('fr-MA', { day: 'numeric', month: 'short', year: 'numeric' })}
+          </p>
+        </div>
+
+        {/* Reorder button */}
+        {isDelivered && (
+          <button onClick={() => onReorder(order.restaurant)} style={{
+            padding: '8px 14px', borderRadius: '20px', border: 'none',
+            background: '#FF6B00', color: '#fff', fontWeight: '800', fontSize: '12px',
+            cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit',
+            boxShadow: '0 3px 10px rgba(255,107,0,0.3)',
+          }}>
+            Reorder
+          </button>
+        )}
+      </div>
+
+      {/* Expand toggle */}
+      <div onClick={() => onToggle(order.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px', borderTop: '1px solid #F5F5F5', cursor: 'pointer', background: '#FAFAFA' }}>
+        <span style={{ fontSize: '11px', color: '#BBB', fontWeight: '600', marginRight: '4px' }}>
+          {isOpen ? 'Masquer les détails' : 'Voir les détails'}
+        </span>
+        {isOpen ? <ChevronUp size={13} color="#BBB" /> : <ChevronDown size={13} color="#BBB" />}
+      </div>
+
+      {/* Expanded details */}
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} style={{ overflow: 'hidden' }}>
+            <div style={{ padding: '12px 16px 16px', borderTop: '1px solid #F5F5F5' }}>
+
+              {/* Address */}
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', background: '#F9F9F9', borderRadius: '10px', padding: '9px 11px', marginBottom: '12px', border: '1px solid #F0F0F0' }}>
+                <MapPin size={13} color="#FF6B00" style={{ flexShrink: 0, marginTop: '1px' }} />
+                <p style={{ fontSize: '12px', color: '#666', lineHeight: 1.4 }}>{order.delivery_address}</p>
+              </div>
+
+              {/* Items */}
+              <div style={{ marginBottom: '12px' }}>
+                {order.items?.map((item, idx) => (
+                  <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '7px 0', borderBottom: idx < order.items.length - 1 ? '1px solid #F5F5F5' : 'none' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ width: '20px', height: '20px', borderRadius: '5px', background: '#FFF3E8', color: '#FF6B00', fontSize: '10px', fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{item.quantity}</span>
+                      <span style={{ fontSize: '13px', color: '#444', fontWeight: '500' }}>{item.menu_item_name}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Info cards */}
+              <div style={{ display: 'flex', gap: '8px', marginBottom: isDelivered ? '12px' : '0' }}>
+                <div style={{ background: '#FFF3E8', borderRadius: '10px', padding: '8px 10px', flex: 1 }}>
+                  <p style={{ fontSize: '9px', fontWeight: '800', color: '#FF6B00', marginBottom: '3px', textTransform: 'uppercase' }}>🍽️ Restaurant</p>
+                  <p style={{ fontSize: '12px', fontWeight: '700', color: '#111' }}>{order.restaurant_name}</p>
+                </div>
+                <div style={{ background: '#F9F9F9', borderRadius: '10px', padding: '8px 10px', flex: 1 }}>
+                  <p style={{ fontSize: '9px', fontWeight: '800', color: '#888', marginBottom: '3px', textTransform: 'uppercase' }}>💳 Paiement</p>
+                  <p style={{ fontSize: '12px', fontWeight: '700', color: '#111' }}>
+                    {order.payment_method === 'cash' ? '💵 Espèces' : '💳 Carte'}
+                  </p>
+                </div>
+                {order.courier_username && (
+                  <div style={{ background: '#EFF6FF', borderRadius: '10px', padding: '8px 10px', flex: 1 }}>
+                    <p style={{ fontSize: '9px', fontWeight: '800', color: '#2563eb', marginBottom: '3px', textTransform: 'uppercase' }}>🛵 Livreur</p>
+                    <p style={{ fontSize: '12px', fontWeight: '700', color: '#111' }}>{order.courier_username}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Rate button */}
+              {isDelivered && (
+                <button onClick={() => toast('Notation à venir ⭐')} style={{
+                  width: '100%', padding: '10px', borderRadius: '12px',
+                  background: '#FFF3E8', color: '#FF6B00', fontWeight: '700', fontSize: '13px',
+                  border: '1.5px solid #FFE0C0', cursor: 'pointer', display: 'flex',
+                  alignItems: 'center', justifyContent: 'center', gap: '6px', fontFamily: 'inherit',
+                }}>
+                  <Star size={14} /> Noter cette commande
+                </button>
+              )}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
 export default function Orders() {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [orders, setOrders]     = useState([]);
+  const [loading, setLoading]   = useState(true);
   const [expanded, setExpanded] = useState(null);
-  const [tab, setTab] = useState('all');
-  const navigate = useNavigate();
+  const [tab, setTab]           = useState('all');
+  const navigate  = useNavigate();
   const { t, isRTL } = useLang();
 
   useEffect(() => {
@@ -107,9 +301,13 @@ export default function Orders() {
     setLoading(false);
   }
 
+  function toggleExpanded(id) {
+    setExpanded(prev => prev === id ? null : id);
+  }
+
   const activeOrders = orders.filter(o => !['delivered', 'cancelled'].includes(o.status));
-  const pastOrders = orders.filter(o => ['delivered', 'cancelled'].includes(o.status));
-  const displayed = tab === 'active' ? activeOrders : tab === 'past' ? pastOrders : orders;
+  const pastOrders   = orders.filter(o => ['delivered', 'cancelled'].includes(o.status));
+  const displayed    = tab === 'active' ? activeOrders : tab === 'past' ? pastOrders : orders;
 
   return (
     <div style={{ background: '#F7F7F8', minHeight: '100vh', paddingBottom: '90px', direction: isRTL ? 'rtl' : 'ltr', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
@@ -130,13 +328,11 @@ export default function Orders() {
             <RefreshCw size={16} color="#fff" />
           </button>
         </div>
-
-        {/* Tabs */}
         <div style={{ display: 'flex', gap: '6px' }}>
           {[
-            { key: 'all', label: 'Tout', count: orders.length },
+            { key: 'all',    label: 'Tout',    count: orders.length },
             { key: 'active', label: 'En cours', count: activeOrders.length },
-            { key: 'past', label: 'Passées', count: pastOrders.length },
+            { key: 'past',   label: 'Passées',  count: pastOrders.length },
           ].map(({ key, label, count }) => (
             <button key={key} onClick={() => setTab(key)} style={{
               flex: 1, padding: '10px 0 14px', background: 'none', border: 'none', cursor: 'pointer',
@@ -171,176 +367,18 @@ export default function Orders() {
             <p style={{ color: '#AAA', fontSize: '13px', marginBottom: '24px', lineHeight: 1.5 }}>
               Commandez maintenant et suivez votre livraison en temps réel
             </p>
-            <button onClick={() => navigate('/')} style={{ background: '#FF6B00', color: '#fff', padding: '13px 32px', borderRadius: '14px', fontWeight: '800', border: 'none', cursor: 'pointer', fontSize: '14px', boxShadow: '0 6px 20px rgba(255,107,0,0.35)', fontFamily: 'inherit' }}>
+            <button onClick={() => navigate('/')} style={{ background: '#FF6B00', color: '#fff', padding: '13px 32px', borderRadius: '14px', fontWeight: '800', border: 'none', cursor: 'pointer', fontSize: '14px', fontFamily: 'inherit' }}>
               🍔 Commander maintenant
             </button>
           </motion.div>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {displayed.map((order, i) => {
-              const s = STATUS_META[order.status] || STATUS_META.pending;
               const isActive = !['delivered', 'cancelled'].includes(order.status);
-              const isPast = ['delivered', 'cancelled'].includes(order.status);
-              const isOpen = expanded === order.id;
-
-              return (
-                <motion.div key={order.id}
-                  initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05, duration: 0.3 }}
-                  style={{
-                    background: '#fff', borderRadius: '20px', overflow: 'hidden',
-                    boxShadow: isActive ? '0 6px 24px rgba(255,107,0,0.1)' : '0 2px 12px rgba(0,0,0,0.05)',
-                    border: isActive ? '1.5px solid #FFE0C0' : '1.5px solid #F0F0F0',
-                  }}
-                >
-                  {/* Active gradient bar */}
-                  {isActive && <div style={{ height: '3px', background: 'linear-gradient(90deg, #FF6B00, #FF9A00, #FFC107)' }} />}
-
-                  {/* Card header */}
-                  <div onClick={() => setExpanded(isOpen ? null : order.id)} style={{ padding: '14px 16px', cursor: 'pointer' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px' }}>
-                      <div style={{ flex: 1, minWidth: 0 }}>
-                        {/* Status row */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '6px', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: '11px', color: '#BBB', fontWeight: '600' }}>#{order.id}</span>
-                          <span style={{ fontSize: '10px', fontWeight: '700', padding: '3px 9px', borderRadius: '20px', background: s.bg, color: s.color, border: `1px solid ${s.border}`, letterSpacing: '0.02em' }}>
-                            {s.label}
-                          </span>
-                          {isActive && (
-                            <span style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10px', fontWeight: '700', color: '#FF6B00' }}>
-                              <PulsingDot /> En direct
-                            </span>
-                          )}
-                        </div>
-
-                        {/* Restaurant name */}
-                        <p style={{ fontSize: '16px', fontWeight: '800', color: '#111', marginBottom: '4px', letterSpacing: '-0.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                          {order.restaurant_name}
-                        </p>
-
-                        {/* Date */}
-                        <p style={{ fontSize: '11px', color: '#BBB', fontWeight: '500', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          <Clock size={10} />
-                          {new Date(order.created_at).toLocaleDateString('fr-MA', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                          {order.items?.length > 0 && <span style={{ marginLeft: '4px' }}>· {order.items.length} article{order.items.length > 1 ? 's' : ''}</span>}
-                        </p>
-                      </div>
-
-                      {/* Right side — price only for active, chevron always */}
-                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '8px', flexShrink: 0 }}>
-                        {isActive && (
-                          <span style={{ fontWeight: '900', color: '#FF6B00', fontSize: '17px', letterSpacing: '-0.02em' }}>
-                            {parseFloat(order.total_price).toFixed(0)} MAD
-                          </span>
-                        )}
-                        <div style={{ width: '26px', height: '26px', borderRadius: '50%', background: '#F5F5F5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                          {isOpen ? <ChevronUp size={14} color="#999" /> : <ChevronDown size={14} color="#999" />}
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Timeline for active orders */}
-                    {isActive && <OrderTimeline status={order.status} />}
-                  </div>
-
-                  {/* Expanded details */}
-                  <AnimatePresence>
-                    {isOpen && (
-                      <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} style={{ overflow: 'hidden' }}>
-                        <div style={{ padding: '0 16px 16px', borderTop: '1px solid #F5F5F5' }}>
-
-                          {/* Timeline for past orders */}
-                          {isPast && <OrderTimeline status={order.status} />}
-
-                          {/* Delivery address */}
-                          <div style={{ background: '#F9F9F9', borderRadius: '12px', padding: '11px 13px', marginBottom: '12px', display: 'flex', alignItems: 'flex-start', gap: '8px', border: '1px solid #F0F0F0' }}>
-                            <MapPin size={14} color="#FF6B00" style={{ flexShrink: 0, marginTop: '1px' }} />
-                            <p style={{ fontSize: '12px', color: '#666', lineHeight: 1.5, fontWeight: '500' }}>{order.delivery_address}</p>
-                          </div>
-
-                          {/* Items list */}
-                          <div style={{ marginBottom: '12px' }}>
-                            {order.items?.map((item, idx) => (
-                              <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: idx < order.items.length - 1 ? '1px solid #F5F5F5' : 'none' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <span style={{ width: '22px', height: '22px', borderRadius: '6px', background: '#FFF3E8', color: '#FF6B00', fontSize: '11px', fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                    {item.quantity}
-                                  </span>
-                                  <span style={{ fontSize: '13px', color: '#444', fontWeight: '500' }}>{item.menu_item_name}</span>
-                                </div>
-                                {/* Item prices only for active orders */}
-                                {isActive && (
-                                  <span style={{ fontSize: '13px', fontWeight: '700', color: '#222' }}>{(item.price * item.quantity).toFixed(0)} MAD</span>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-
-                          {/* Price breakdown — active orders only */}
-                          {isActive && (
-                            <div style={{ background: '#F9F9F9', borderRadius: '14px', padding: '12px 14px', marginBottom: '14px', border: '1px solid #F0F0F0' }}>
-                              {order.delivery_fee > 0 && (
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#888', marginBottom: '6px' }}>
-                                  <span>🛵 Livraison</span>
-                                  <span style={{ fontWeight: '600' }}>{parseFloat(order.delivery_fee).toFixed(0)} MAD</span>
-                                </div>
-                              )}
-                              {order.service_fee > 0 && (
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#888', marginBottom: '8px' }}>
-                                  <span>🛡️ Frais de service</span>
-                                  <span style={{ fontWeight: '600' }}>{parseFloat(order.service_fee).toFixed(0)} MAD</span>
-                                </div>
-                              )}
-                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '15px', fontWeight: '900', paddingTop: '8px', borderTop: '1px solid #EBEBEB' }}>
-                                <span style={{ color: '#111' }}>Total</span>
-                                <span style={{ color: '#FF6B00' }}>{parseFloat(order.total_price).toFixed(0)} MAD</span>
-                              </div>
-                              {order.payment_method && (
-                                <p style={{ fontSize: '11px', color: '#AAA', marginTop: '6px', fontWeight: '500' }}>
-                                  {order.payment_method === 'cash' ? '💵 Paiement en espèces' : '💳 Paiement par carte'}
-                                </p>
-                              )}
-                            </div>
-                          )}
-
-                          {/* Past order info cards */}
-                          {isPast && (
-                            <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
-                              <div style={{ background: '#FFF3E8', borderRadius: '10px', padding: '8px 10px', flex: 1 }}>
-                                <p style={{ fontSize: '9px', fontWeight: '800', color: '#FF6B00', marginBottom: '3px', textTransform: 'uppercase' }}>🍽️ Restaurant</p>
-                                <p style={{ fontSize: '12px', fontWeight: '700', color: '#111' }}>{order.restaurant_name}</p>
-                              </div>
-                              <div style={{ background: '#F9F9F9', borderRadius: '10px', padding: '8px 10px', flex: 1 }}>
-                                <p style={{ fontSize: '9px', fontWeight: '800', color: '#888', marginBottom: '3px', textTransform: 'uppercase' }}>💳 Paiement</p>
-                                <p style={{ fontSize: '12px', fontWeight: '700', color: '#111' }}>
-                                  {order.payment_method === 'cash' ? '💵 Espèces' : '💳 Carte'}
-                                </p>
-                              </div>
-                              {order.courier_username && (
-                                <div style={{ background: '#EFF6FF', borderRadius: '10px', padding: '8px 10px', flex: 1 }}>
-                                  <p style={{ fontSize: '9px', fontWeight: '800', color: '#2563eb', marginBottom: '3px', textTransform: 'uppercase' }}>🛵 Livreur</p>
-                                  <p style={{ fontSize: '12px', fontWeight: '700', color: '#111' }}>{order.courier_username}</p>
-                                </div>
-                              )}
-                            </div>
-                          )}
-
-                          {/* Reorder + rate buttons — delivered only */}
-                          {order.status === 'delivered' && (
-                            <div style={{ display: 'flex', gap: '10px' }}>
-                              <button onClick={() => navigate(`/restaurant/${order.restaurant}`)} style={{ flex: 1, padding: '12px', borderRadius: '14px', background: '#FF6B00', color: '#fff', fontWeight: '800', fontSize: '13px', border: 'none', cursor: 'pointer', boxShadow: '0 4px 14px rgba(255,107,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px', fontFamily: 'inherit' }}>
-                                <RotateCcw size={14} /> Recommander
-                              </button>
-                              <button onClick={() => toast('Notation à venir ⭐')} style={{ width: '46px', height: '46px', borderRadius: '14px', background: '#FFF3E8', color: '#FF6B00', border: '1.5px solid #FFE0C0', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                <Star size={16} />
-                              </button>
-                            </div>
-                          )}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
+              return isActive ? (
+                <ActiveOrderCard key={order.id} order={order} expanded={expanded} onToggle={toggleExpanded} />
+              ) : (
+                <PastOrderCard key={order.id} order={order} expanded={expanded} onToggle={toggleExpanded} onReorder={id => navigate(`/restaurant/${id}`)} />
               );
             })}
           </div>
