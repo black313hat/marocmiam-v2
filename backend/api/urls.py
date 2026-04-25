@@ -24,6 +24,8 @@ urlpatterns = [
     path('orders/create/', views.create_full_order),
     path('orders/all/', views.AllOrdersView.as_view()),
     path('orders/<int:pk>/', views.OrderDetailView.as_view()),
+    path('orders/<int:order_id>/review/', views.submit_review),
+    path('orders/<int:order_id>/review/check/', views.check_review),
 
     # Admin order detail
     path('admin/orders/<int:pk>/', views.AdminOrderDetailView.as_view()),

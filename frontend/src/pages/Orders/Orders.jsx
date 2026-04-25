@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { getOrders } from '../../services/api';
+import API from '../../services/api';
 import { useNavigate } from 'react-router-dom';
-import { RefreshCw, ChevronDown, ChevronUp, MapPin, Clock, Star } from 'lucide-react';
+import { RefreshCw, ChevronDown, ChevronUp, MapPin, Clock, Star, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useLang } from '../../context/LanguageContext';
 
 const STEPS = [
-  { key: 'pending', emoji: '📋', label: 'Reçue' },
+  { key: 'pending',   emoji: '📋', label: 'Reçue' },
   { key: 'confirmed', emoji: '✅', label: 'Confirmée' },
   { key: 'preparing', emoji: '👨‍🍳', label: 'Préparation' },
   { key: 'picked_up', emoji: '🛵', label: 'En route' },
@@ -15,7 +16,7 @@ const STEPS = [
 ];
 
 const STATUS_META = {
-  pending: { color: '#F59E0B', bg: '#FFFBEB', border: '#FDE68A', label: 'En attente' },
+  pending:   { color: '#F59E0B', bg: '#FFFBEB', border: '#FDE68A', label: 'En attente' },
   confirmed: { color: '#3B82F6', bg: '#EFF6FF', border: '#BFDBFE', label: 'Confirmée' },
   preparing: { color: '#8B5CF6', bg: '#F5F3FF', border: '#DDD6FE', label: 'En préparation' },
   picked_up: { color: '#06B6D4', bg: '#ECFEFF', border: '#A5F3FC', label: 'En route' },
@@ -67,6 +68,95 @@ function SkeletonCard() {
         <div key={i} style={{ height: '12px', width: `${w}%`, background: 'linear-gradient(90deg, #F0F0F0 25%, #E8E8E8 50%, #F0F0F0 75%)', backgroundSize: '200% 100%', borderRadius: '6px', marginBottom: '10px', animation: 'shimmer 1.5s infinite' }} />
       ))}
     </div>
+  );
+}
+
+// ── Rating Modal ──
+function RatingModal({ order, onClose, onSubmitted }) {
+  const [rating, setRating]   = useState(5);
+  const [comment, setComment] = useState('');
+  const [hover, setHover]     = useState(0);
+  const [loading, setLoading] = useState(false);
+
+  async function submit() {
+    setLoading(true);
+    try {
+      await API.post(`/orders/${order.id}/review/`, { rating, comment });
+      toast.success('Merci pour votre avis! ⭐');
+      onSubmitted(order.id, rating);
+      onClose();
+    } catch (err) {
+      toast.error(err.response?.data?.error || 'Erreur');
+    }
+    setLoading(false);
+  }
+
+  const labels = ['', 'Très mauvais', 'Mauvais', 'Correct', 'Bien', 'Excellent!'];
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+      onClick={onClose}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center' }}>
+      <motion.div initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }} transition={{ type: 'spring', damping: 25 }}
+        onClick={e => e.stopPropagation()}
+        style={{ background: '#fff', borderRadius: '24px 24px 0 0', width: '100%', maxWidth: '480px', padding: '24px', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+          <div>
+            <h2 style={{ fontSize: '18px', fontWeight: '900', color: '#111', letterSpacing: '-0.02em' }}>
+              Noter votre commande
+            </h2>
+            <p style={{ fontSize: '12px', color: '#AAA', marginTop: '2px' }}>{order.restaurant_name}</p>
+          </div>
+          <button onClick={onClose} style={{ width: '32px', height: '32px', borderRadius: '50%', background: '#F5F5F5', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <X size={16} color="#888" />
+          </button>
+        </div>
+
+        {/* Stars */}
+        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '8px', marginBottom: '10px' }}>
+            {[1, 2, 3, 4, 5].map(i => (
+              <button key={i}
+                onClick={() => setRating(i)}
+                onMouseEnter={() => setHover(i)}
+                onMouseLeave={() => setHover(0)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '4px', transition: 'transform 0.1s' }}>
+                <Star size={36}
+                  fill={(hover || rating) >= i ? '#FF6B00' : 'none'}
+                  color={(hover || rating) >= i ? '#FF6B00' : '#DDD'}
+                  style={{ transform: (hover || rating) >= i ? 'scale(1.1)' : 'scale(1)', transition: 'all 0.15s' }}
+                />
+              </button>
+            ))}
+          </div>
+          <p style={{ fontSize: '14px', fontWeight: '700', color: '#FF6B00' }}>{labels[hover || rating]}</p>
+        </div>
+
+        {/* Comment */}
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', fontSize: '11px', fontWeight: '800', color: '#888', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Commentaire (optionnel)
+          </label>
+          <textarea value={comment} onChange={e => setComment(e.target.value)}
+            placeholder="Partagez votre expérience..."
+            rows={3}
+            style={{ width: '100%', padding: '12px 14px', borderRadius: '12px', border: '1.5px solid #E8E8E8', fontSize: '14px', background: '#F8F8F8', resize: 'none', fontFamily: 'inherit', boxSizing: 'border-box', outline: 'none' }}
+          />
+        </div>
+
+        <button onClick={submit} disabled={loading} style={{
+          width: '100%', padding: '15px', borderRadius: '14px', border: 'none',
+          background: loading ? '#FFB380' : 'linear-gradient(135deg, #FF6B00, #FF9A3C)',
+          color: '#fff', fontSize: '15px', fontWeight: '800',
+          cursor: loading ? 'not-allowed' : 'pointer',
+          boxShadow: loading ? 'none' : '0 6px 20px rgba(255,107,0,0.35)',
+          fontFamily: 'inherit',
+        }}>
+          {loading ? 'Envoi...' : `⭐ Envoyer mon avis (${rating}/5)`}
+        </button>
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -150,26 +240,25 @@ function ActiveOrderCard({ order, expanded, onToggle }) {
   );
 }
 
-// ── Past Order Card (Glovo style) ──
-function PastOrderCard({ order, onReorder, expanded, onToggle }) {
+// ── Past Order Card ──
+function PastOrderCard({ order, onReorder, expanded, onToggle, onRate, ratedOrders }) {
   const s = STATUS_META[order.status] || STATUS_META.delivered;
   const isOpen = expanded === order.id;
   const isDelivered = order.status === 'delivered';
   const items = order.order_items || [];
   const itemsSummary = items.map(i => `${i.quantity}x ${i.menu_item_name}`).join(', ');
+  const hasRated = ratedOrders.includes(order.id);
 
   return (
     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
       style={{ background: '#fff', borderRadius: '16px', overflow: 'hidden', border: '1.5px solid #F0F0F0', boxShadow: '0 2px 8px rgba(0,0,0,0.04)' }}>
 
-      {/* Main row */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 16px' }}>
         <div style={{ width: '56px', height: '56px', borderRadius: '12px', background: '#FFF3E8', flexShrink: 0, overflow: 'hidden' }}>
           {order.restaurant_image ? (
             <img src={order.restaurant_image} alt={order.restaurant_name}
               style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-              onError={e => { e.target.style.display = 'none'; }}
-            />
+              onError={e => { e.target.style.display = 'none'; }} />
           ) : (
             <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>🍽️</div>
           )}
@@ -187,10 +276,11 @@ function PastOrderCard({ order, onReorder, expanded, onToggle }) {
           <p style={{ fontSize: '11px', color: '#BBB', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <Clock size={10} />
             {new Date(order.created_at).toLocaleDateString('fr-MA', { day: 'numeric', month: 'short', year: 'numeric' })}
+            {hasRated && <span style={{ color: '#FF6B00', marginLeft: '4px' }}>⭐ Noté</span>}
           </p>
         </div>
         {isDelivered && (
-          <button onClick={() => onReorder(order.restaurant)} style={{
+          <button onClick={() => onReorder(order.restaurant_id)} style={{
             padding: '8px 14px', borderRadius: '20px', border: 'none',
             background: '#FF6B00', color: '#fff', fontWeight: '800', fontSize: '12px',
             cursor: 'pointer', flexShrink: 0, fontFamily: 'inherit',
@@ -201,7 +291,6 @@ function PastOrderCard({ order, onReorder, expanded, onToggle }) {
         )}
       </div>
 
-      {/* Toggle */}
       <div onClick={() => onToggle(order.id)} style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px', borderTop: '1px solid #F5F5F5', cursor: 'pointer', background: '#FAFAFA' }}>
         <span style={{ fontSize: '11px', color: '#BBB', fontWeight: '600', marginRight: '4px' }}>
           {isOpen ? 'Masquer les détails' : 'Voir les détails'}
@@ -209,34 +298,27 @@ function PastOrderCard({ order, onReorder, expanded, onToggle }) {
         {isOpen ? <ChevronUp size={13} color="#BBB" /> : <ChevronDown size={13} color="#BBB" />}
       </div>
 
-      {/* Expanded */}
       <AnimatePresence>
         {isOpen && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }} style={{ overflow: 'hidden' }}>
             <div style={{ padding: '12px 16px 16px', borderTop: '1px solid #F5F5F5' }}>
-
-              {/* Address */}
               <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', background: '#F9F9F9', borderRadius: '10px', padding: '9px 11px', marginBottom: '12px', border: '1px solid #F0F0F0' }}>
                 <MapPin size={13} color="#FF6B00" style={{ flexShrink: 0, marginTop: '1px' }} />
                 <p style={{ fontSize: '12px', color: '#666', lineHeight: 1.4 }}>{order.delivery_address}</p>
               </div>
 
-              {/* Items — no prices */}
               {items.length > 0 && (
                 <div style={{ marginBottom: '12px', background: '#F9F9F9', borderRadius: '10px', padding: '8px 12px', border: '1px solid #F0F0F0' }}>
                   {items.map((item, idx) => (
                     <div key={item.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 0', borderBottom: idx < items.length - 1 ? '1px solid #F0F0F0' : 'none' }}>
-                      <span style={{ width: '20px', height: '20px', borderRadius: '5px', background: '#FFF3E8', color: '#FF6B00', fontSize: '10px', fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                        {item.quantity}
-                      </span>
+                      <span style={{ width: '20px', height: '20px', borderRadius: '5px', background: '#FFF3E8', color: '#FF6B00', fontSize: '10px', fontWeight: '800', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{item.quantity}</span>
                       <span style={{ fontSize: '13px', color: '#444', fontWeight: '500' }}>{item.menu_item_name}</span>
                     </div>
                   ))}
                 </div>
               )}
 
-              {/* Info cards */}
-              <div style={{ display: 'flex', gap: '8px', marginBottom: isDelivered ? '12px' : '0' }}>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
                 <div style={{ background: '#FFF3E8', borderRadius: '10px', padding: '8px 10px', flex: 1 }}>
                   <p style={{ fontSize: '9px', fontWeight: '800', color: '#FF6B00', marginBottom: '3px', textTransform: 'uppercase' }}>🍽️ Restaurant</p>
                   <p style={{ fontSize: '12px', fontWeight: '700', color: '#111' }}>{order.restaurant_name}</p>
@@ -253,16 +335,23 @@ function PastOrderCard({ order, onReorder, expanded, onToggle }) {
                 )}
               </div>
 
-              {/* Rate */}
               {isDelivered && (
-                <button onClick={() => toast('Notation à venir ⭐')} style={{
-                  width: '100%', padding: '10px', borderRadius: '12px', background: '#FFF3E8',
-                  color: '#FF6B00', fontWeight: '700', fontSize: '13px', border: '1.5px solid #FFE0C0',
-                  cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  gap: '6px', fontFamily: 'inherit',
-                }}>
-                  <Star size={14} /> Noter cette commande
-                </button>
+                hasRated ? (
+                  <div style={{ padding: '12px', borderRadius: '12px', background: '#FFF3E8', border: '1.5px solid #FFE0C0', textAlign: 'center' }}>
+                    <p style={{ fontSize: '13px', fontWeight: '700', color: '#FF6B00' }}>⭐ Vous avez noté cette commande</p>
+                  </div>
+                ) : (
+                  <button onClick={() => onRate(order)} style={{
+                    width: '100%', padding: '12px', borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #FF6B00, #FF9A3C)',
+                    color: '#fff', fontWeight: '800', fontSize: '13px',
+                    border: 'none', cursor: 'pointer',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    fontFamily: 'inherit', boxShadow: '0 4px 14px rgba(255,107,0,0.3)',
+                  }}>
+                    <Star size={15} fill="#fff" /> Noter cette commande
+                  </button>
+                )
               )}
             </div>
           </motion.div>
@@ -274,11 +363,13 @@ function PastOrderCard({ order, onReorder, expanded, onToggle }) {
 
 // ── Main ──
 export default function Orders() {
-  const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [expanded, setExpanded] = useState(null);
-  const [tab, setTab] = useState('all');
-  const navigate = useNavigate();
+  const [orders, setOrders]       = useState([]);
+  const [loading, setLoading]     = useState(true);
+  const [expanded, setExpanded]   = useState(null);
+  const [tab, setTab]             = useState('all');
+  const [ratingOrder, setRatingOrder] = useState(null);
+  const [ratedOrders, setRatedOrders] = useState([]);
+  const navigate  = useNavigate();
   const { t, isRTL } = useLang();
 
   useEffect(() => {
@@ -293,6 +384,13 @@ export default function Orders() {
       setOrders(res.data);
       const active = res.data.find(o => !['delivered', 'cancelled'].includes(o.status));
       if (active) setExpanded(active.id);
+
+      // Check which delivered orders have already been rated
+      const delivered = res.data.filter(o => o.status === 'delivered');
+      const ratedChecks = await Promise.all(
+        delivered.map(o => API.get(`/orders/${o.id}/review/check/`).then(r => r.data.has_review ? o.id : null).catch(() => null))
+      );
+      setRatedOrders(ratedChecks.filter(Boolean));
     } catch (err) {
       if (err.response?.status !== 401) toast.error('Could not load orders');
     }
@@ -303,9 +401,13 @@ export default function Orders() {
     setExpanded(prev => prev === id ? null : id);
   }
 
+  function handleRated(orderId, rating) {
+    setRatedOrders(prev => [...prev, orderId]);
+  }
+
   const activeOrders = orders.filter(o => !['delivered', 'cancelled'].includes(o.status));
-  const pastOrders = orders.filter(o => ['delivered', 'cancelled'].includes(o.status));
-  const displayed = tab === 'active' ? activeOrders : tab === 'past' ? pastOrders : orders;
+  const pastOrders   = orders.filter(o => ['delivered', 'cancelled'].includes(o.status));
+  const displayed    = tab === 'active' ? activeOrders : tab === 'past' ? pastOrders : orders;
 
   return (
     <div style={{ background: '#F7F7F8', minHeight: '100vh', paddingBottom: '90px', direction: isRTL ? 'rtl' : 'ltr', fontFamily: "'Plus Jakarta Sans', sans-serif" }}>
@@ -328,9 +430,9 @@ export default function Orders() {
         </div>
         <div style={{ display: 'flex', gap: '6px' }}>
           {[
-            { key: 'all', label: 'Tout', count: orders.length },
+            { key: 'all',    label: 'Tout',    count: orders.length },
             { key: 'active', label: 'En cours', count: activeOrders.length },
-            { key: 'past', label: 'Passées', count: pastOrders.length },
+            { key: 'past',   label: 'Passées',  count: pastOrders.length },
           ].map(({ key, label, count }) => (
             <button key={key} onClick={() => setTab(key)} style={{
               flex: 1, padding: '10px 0 14px', background: 'none', border: 'none', cursor: 'pointer',
@@ -376,12 +478,27 @@ export default function Orders() {
               return isActive ? (
                 <ActiveOrderCard key={order.id} order={order} expanded={expanded} onToggle={toggleExpanded} />
               ) : (
-                <PastOrderCard key={order.id} order={order} expanded={expanded} onToggle={toggleExpanded} onReorder={() => navigate(`/restaurant/${order.restaurant_id}`)} />
+                <PastOrderCard key={order.id} order={order} expanded={expanded} onToggle={toggleExpanded}
+                  onReorder={id => navigate(`/restaurant/${id}`)}
+                  onRate={setRatingOrder}
+                  ratedOrders={ratedOrders}
+                />
               );
             })}
           </div>
         )}
       </div>
+
+      {/* Rating Modal */}
+      <AnimatePresence>
+        {ratingOrder && (
+          <RatingModal
+            order={ratingOrder}
+            onClose={() => setRatingOrder(null)}
+            onSubmitted={handleRated}
+          />
+        )}
+      </AnimatePresence>
     </div>
   );
 }

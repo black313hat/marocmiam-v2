@@ -81,6 +81,16 @@ class OrderItem(models.Model):
     def __str__(self):
         return f"{self.quantity}x {self.menu_item.name}"
 
+class Review(models.Model):
+    order      = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='review')
+    customer   = models.ForeignKey(User, on_delete=models.CASCADE)
+    restaurant = models.ForeignKey(Restaurant, on_delete=models.CASCADE, related_name='reviews')
+    rating     = models.IntegerField(default=5)  # 1-5
+    comment    = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Review by {self.customer.username} for {self.restaurant.name} - {self.rating}★"
 
 class Courier(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)

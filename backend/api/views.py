@@ -1047,3 +1047,46 @@ def courier_history(request):
         return Response(OrderSerializer(orders, many=True).data)
     except Courier.DoesNotExist:
         return Response({'error': 'Not a courier'}, status=404)
+    
+    
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def submit_review(request, order_id):
+    try:
+        order = Order.objects.get(id=order_id, customer=request.user, status='delivered')
+    except Order.DoesNotExist:
+        return Response({'error': 'Order not found or not delivered'}, status=404)
+
+    if hasattr(order, 'review'):
+        return Response({'error': 'Already reviewed'}, status=400)
+
+    rating  = int(request.data.get('rating', 5))
+    comment = request.data.get('comment', '')
+
+    if not 1 <= rating <= 5:
+        return Response({'error': 'Rating must be between 1 and 5'}, status=400)
+
+    from .models import Review
+    Review.objects.create(
+        order=order, customer=request.user,
+        restaurant=order.restaurant, rating=rating, comment=comment
+    )
+
+    # Recalculate restaurant average rating
+    from django.db.models import Avg
+    avg = order.restaurant.reviews.aggregate(Avg('rating'))['rating__avg']
+    order.restaurant.rating = round(avg, 1)
+    order.restaurant.save()
+
+    return Response({'status': 'Review submitted', 'new_rating': order.restaurant.rating})
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def check_review(request, order_id):
+    try:
+        order = Order.objects.get(id=order_id, customer=request.user)
+        has_review = hasattr(order, 'review')
+        return Response({'has_review': has_review, 'rating': order.review.rating if has_review else None})
+    except Order.DoesNotExist:
+        return Response({'error': 'Order not found'}, status=404)
