@@ -105,12 +105,14 @@ export default function Checkout() {
       if (contactless) finalNotes += '\n📦 Livraison sans contact';
       if (scheduledDelivery && scheduledTime) finalNotes += `\n⏰ Livraison programmée: ${scheduledTime}`;
 
-      const restaurantId = restaurantId; // already from useCart
       const items = cart.map(item => ({
         menu_item_id: item.id,
         quantity: item.quantity,
         price: item.price,
       }));
+
+      if (!restaurantId) { toast.error('Erreur: restaurant non trouvé'); setSubmitting(false); isSubmittingRef.current = false; return; }
+      if (items.length === 0) { toast.error('Panier vide'); setSubmitting(false); isSubmittingRef.current = false; return; }
 
       const res = await API.post('/orders/create/', {
         restaurant_id: restaurantId,
@@ -197,7 +199,7 @@ export default function Checkout() {
   const labelStyle = { fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '8px' };
 
   return (
-    <div style={{ background: '#030712', minHeight: '100vh', paddingBottom: '180px', fontFamily: "'Plus Jakarta Sans', sans-serif", direction: isRTL ? 'rtl' : 'ltr' }}>
+    <div style={{ background: '#030712', minHeight: '100vh', paddingBottom: '120px', fontFamily: "'Plus Jakarta Sans', sans-serif", direction: isRTL ? 'rtl' : 'ltr' }}>
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');`}</style>
 
       {/* Header */}
@@ -426,7 +428,7 @@ export default function Checkout() {
       </AnimatePresence>
 
       {/* Submit button */}
-      <div style={{ position: 'fixed', bottom: '72px', left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '480px', padding: '16px', background: 'linear-gradient(to top, #030712 80%, transparent)', zIndex: 40 }}>
+      <div style={{ position: 'fixed', bottom: 0, left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '480px', padding: '16px', background: 'linear-gradient(to top, #030712 80%, transparent)', zIndex: 40 }}>
         <button type="submit" form="checkout-form" onClick={handleSubmit}
           disabled={submitting || !address.trim() || !phone.trim() || (scheduledDelivery && !scheduledTime) || (!hasExactAmount && customerAmount && parseFloat(customerAmount) < total)}
           style={{
