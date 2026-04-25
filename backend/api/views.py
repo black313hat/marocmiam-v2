@@ -673,12 +673,16 @@ def owner_update_order(request, order_id):
         if 'status' in request.data:
             order.status = request.data['status']
             order.save()
+            # Notify customer of status change
+            try:
+                notify_order_status(order)
+            except Exception as e:
+                print(f'Notification error: {e}')
         return Response(OrderSerializer(order).data)
     except Order.DoesNotExist:
         return Response({'error': 'Not found'}, status=404)
     except Exception as e:
         return Response({'error': str(e)}, status=400)
-
 
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
