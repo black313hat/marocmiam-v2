@@ -21,8 +21,12 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('access_token', res.data.access);
     localStorage.setItem('refresh_token', res.data.refresh);
     localStorage.setItem('user', JSON.stringify(res.data.user));
+
+    // Set token BEFORE calling notifications
+    API.defaults.headers.common['Authorization'] = `Bearer ${res.data.access}`;
+
     setUser(res.data.user);
-    // Request notification permission and save token
+
     requestNotificationPermission().then(token => {
       if (token) {
         API.post('/notifications/token/', { token }).catch(() => { });
@@ -36,8 +40,11 @@ export const AuthProvider = ({ children }) => {
     localStorage.setItem('access_token', res.data.access);
     localStorage.setItem('refresh_token', res.data.refresh);
     localStorage.setItem('user', JSON.stringify(res.data.user));
+
+    // Set token BEFORE calling notifications
+    API.defaults.headers.common['Authorization'] = `Bearer ${res.data.access}`;
+
     setUser(res.data.user);
-    // Request notification permission and save token
     requestNotificationPermission().then(token => {
       if (token) {
         API.post('/notifications/token/', { token }).catch(() => { });
