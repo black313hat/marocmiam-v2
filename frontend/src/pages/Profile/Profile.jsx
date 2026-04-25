@@ -3,7 +3,9 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useCart } from '../../context/CartContext';
 import { useLang } from '../../context/LanguageContext';
-import { ShoppingBag, Store, Bike, Shield, ChevronRight, LogOut, Settings, MapPin, Phone } from 'lucide-react';
+import { ShoppingBag, Store, Bike, Shield, ChevronRight, LogOut, Bell } from 'lucide-react';
+import API from '../../services/api';
+import { requestNotificationPermission } from '../../firebase';
 import toast from 'react-hot-toast';
 
 export default function Profile() {
@@ -11,6 +13,7 @@ export default function Profile() {
   const { itemCount } = useCart();
   const { t } = useLang();
   const navigate = useNavigate();
+  const [notifLoading, setNotifLoading] = useState(false);
 
   if (!user) return (
     <div style={{
@@ -43,6 +46,22 @@ export default function Profile() {
     navigate('/');
   };
 
+  async function enableNotifications() {
+    setNotifLoading(true);
+    try {
+      const token = await requestNotificationPermission();
+      if (token) {
+        await API.post('/notifications/token/', { token });
+        toast.success('Notifications activées! 🔔');
+      } else {
+        toast.error('Permission refusée. Activez les notifications dans les paramètres du navigateur.');
+      }
+    } catch {
+      toast.error('Erreur lors de l\'activation');
+    }
+    setNotifLoading(false);
+  }
+
   const initials = user.first_name
     ? `${user.first_name[0]}${user.last_name?.[0] || ''}`.toUpperCase()
     : user.username[0].toUpperCase();
@@ -54,11 +73,12 @@ export default function Profile() {
   const profileRole = user.profile_role || 'customer';
 
   const menuItems = [
-    { icon: ShoppingBag, label: t('my_orders'), sub: t('my_orders_sub'), path: '/orders', color: '#FF6B00', bg: '#FFF3E8' },
-    ...(profileRole === 'restaurant_owner' ? [{ icon: Store, label: t('restaurant_dashboard'), sub: t('restaurant_dashboard_sub'), path: '/restaurant-owner', color: '#8B5CF6', bg: '#F5F3FF' }] : []),
-    ...(profileRole === 'courier' ? [{ icon: Bike, label: t('courier_dashboard'), sub: t('courier_dashboard_sub'), path: '/courier-app', color: '#06B6D4', bg: '#ECFEFF' }] : []),
-    ...(user.is_staff ? [{ icon: Shield, label: t('admin_panel'), sub: t('admin_panel_sub'), path: '/admin-panel', color: '#00A651', bg: 'rgba(0,166,81,0.08)' }] : []),
+    { icon: ShoppingBag, label: t('my_orders'),            sub: t('my_orders_sub'),            path: '/orders',          color: '#FF6B00', bg: '#FFF3E8' },
+    ...(profileRole === 'restaurant_owner' ? [{ icon: Store,   label: t('restaurant_dashboard'), sub: t('restaurant_dashboard_sub'), path: '/restaurant-owner', color: '#8B5CF6', bg: '#F5F3FF' }] : []),
+    ...(profileRole === 'courier'          ? [{ icon: Bike,    label: t('courier_dashboard'),    sub: t('courier_dashboard_sub'),    path: '/courier-app',      color: '#06B6D4', bg: '#ECFEFF' }] : []),
+    ...(user.is_staff                      ? [{ icon: Shield,  label: t('admin_panel'),          sub: t('admin_panel_sub'),          path: '/admin-panel',      color: '#00A651', bg: 'rgba(0,166,81,0.08)' }] : []),
   ];
+
   return (
     <div style={{
       minHeight: '100vh', background: '#F7F7F8', paddingBottom: '90px',
@@ -81,7 +101,6 @@ export default function Profile() {
         <div style={{ position: 'absolute', bottom: -30, left: 20, width: '80px', height: '80px', borderRadius: '50%', background: 'rgba(255,255,255,0.06)' }} />
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', animation: 'slideUp 0.4s ease' }}>
-          {/* Avatar */}
           <div style={{
             width: '70px', height: '70px', borderRadius: '50%',
             background: 'rgba(255,255,255,0.25)',
@@ -93,22 +112,14 @@ export default function Profile() {
           }}>
             {initials}
           </div>
-
           <div style={{ flex: 1, minWidth: 0 }}>
             <h2 style={{ fontSize: '20px', fontWeight: '900', color: '#fff', letterSpacing: '-0.02em', marginBottom: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {displayName}
             </h2>
             <p style={{ color: 'rgba(255,255,255,0.75)', fontSize: '12px', fontWeight: '600' }}>@{user.username}</p>
-            {user.email && (
-              <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '11px', marginTop: '2px' }}>{user.email}</p>
-            )}
+            {user.email && <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '11px', marginTop: '2px' }}>{user.email}</p>}
             {user.is_staff && (
-              <span style={{
-                marginTop: '6px', display: 'inline-block',
-                background: 'rgba(255,255,255,0.2)', fontSize: '9px',
-                fontWeight: '800', padding: '3px 10px', borderRadius: '20px',
-                letterSpacing: '0.08em', color: '#fff',
-              }}>
+              <span style={{ marginTop: '6px', display: 'inline-block', background: 'rgba(255,255,255,0.2)', fontSize: '9px', fontWeight: '800', padding: '3px 10px', borderRadius: '20px', letterSpacing: '0.08em', color: '#fff' }}>
                 ✦ ADMIN
               </span>
             )}
@@ -120,14 +131,10 @@ export default function Profile() {
       <div style={{ padding: '16px', animation: 'slideUp 0.4s ease 0.05s both' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
           {[
-            { label: 'Panier', value: itemCount, icon: '🛒', color: '#FF6B00' },
-            { label: 'Compte', value: user.is_staff ? 'Admin' : 'Client', icon: '👤', color: '#00A651' },
+            { label: 'Panier', value: itemCount,                            icon: '🛒', color: '#FF6B00' },
+            { label: 'Compte', value: user.is_staff ? 'Admin' : 'Client',  icon: '👤', color: '#00A651' },
           ].map((s, i) => (
-            <div key={i} style={{
-              background: '#fff', borderRadius: '16px', padding: '16px',
-              border: '1.5px solid #F0F0F0', textAlign: 'center',
-              boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
-            }}>
+            <div key={i} style={{ background: '#fff', borderRadius: '16px', padding: '16px', border: '1.5px solid #F0F0F0', textAlign: 'center', boxShadow: '0 2px 10px rgba(0,0,0,0.04)' }}>
               <div style={{ fontSize: '26px', marginBottom: '6px' }}>{s.icon}</div>
               <p style={{ fontSize: '17px', fontWeight: '900', color: s.color, letterSpacing: '-0.02em' }}>{s.value}</p>
               <p style={{ fontSize: '11px', color: '#AAA', fontWeight: '600', marginTop: '2px' }}>{s.label}</p>
@@ -146,35 +153,52 @@ export default function Profile() {
           <Link key={i} to={path} className="menu-item" style={{
             display: 'flex', alignItems: 'center', gap: '14px',
             background: '#fff', borderRadius: '16px', padding: '14px 16px',
-            border: '1.5px solid #F0F0F0',
-            boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+            border: '1.5px solid #F0F0F0', boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
             textDecoration: 'none', transition: 'all 0.15s',
           }}>
-            <div style={{
-              width: '44px', height: '44px', borderRadius: '13px',
-              background: bg, display: 'flex', alignItems: 'center',
-              justifyContent: 'center', flexShrink: 0,
-            }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '13px', background: bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <Icon size={20} color={color} />
             </div>
             <div style={{ flex: 1 }}>
               <p style={{ fontSize: '14px', fontWeight: '700', color: '#111', letterSpacing: '-0.01em' }}>{label}</p>
               <p style={{ fontSize: '12px', color: '#AAA', marginTop: '1px', fontWeight: '500' }}>{sub}</p>
             </div>
-            <div style={{
-              width: '28px', height: '28px', borderRadius: '50%',
-              background: '#F5F5F5', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
+            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#F5F5F5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <ChevronRight size={14} color="#BBB" />
             </div>
           </Link>
         ))}
 
-        {/* Logout */}
+        {/* Account section */}
         <div style={{ marginTop: '8px' }}>
           <p style={{ fontSize: '11px', fontWeight: '800', color: '#BBB', letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '8px', paddingLeft: '4px' }}>
             Compte
           </p>
+
+          {/* Enable Notifications */}
+          <button onClick={enableNotifications} disabled={notifLoading} className="menu-item" style={{
+            display: 'flex', alignItems: 'center', gap: '14px',
+            background: '#fff', borderRadius: '16px', padding: '14px 16px',
+            border: '1.5px solid #F0F0F0', width: '100%',
+            boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
+            cursor: notifLoading ? 'not-allowed' : 'pointer', fontFamily: 'inherit',
+            marginBottom: '8px', opacity: notifLoading ? 0.7 : 1,
+          }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '13px', background: '#FFF3E8', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <Bell size={20} color="#FF6B00" />
+            </div>
+            <div style={{ flex: 1, textAlign: 'left' }}>
+              <p style={{ fontSize: '14px', fontWeight: '700', color: '#FF6B00', letterSpacing: '-0.01em' }}>
+                {notifLoading ? 'Activation...' : 'Activer les notifications'}
+              </p>
+              <p style={{ fontSize: '12px', color: '#AAA', marginTop: '1px', fontWeight: '500' }}>Recevez les mises à jour de vos commandes</p>
+            </div>
+            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#FFF3E8', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <ChevronRight size={14} color="#FF6B00" />
+            </div>
+          </button>
+
+          {/* Logout */}
           <button onClick={handleLogout} className="menu-item" style={{
             display: 'flex', alignItems: 'center', gap: '14px',
             background: '#fff', borderRadius: '16px', padding: '14px 16px',
@@ -182,28 +206,20 @@ export default function Profile() {
             boxShadow: '0 2px 10px rgba(0,0,0,0.04)',
             cursor: 'pointer', fontFamily: 'inherit',
           }}>
-            <div style={{
-              width: '44px', height: '44px', borderRadius: '13px',
-              background: '#FEF2F2', display: 'flex', alignItems: 'center',
-              justifyContent: 'center', flexShrink: 0,
-            }}>
+            <div style={{ width: '44px', height: '44px', borderRadius: '13px', background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <LogOut size={20} color="#EF4444" />
             </div>
             <div style={{ flex: 1, textAlign: 'left' }}>
               <p style={{ fontSize: '14px', fontWeight: '700', color: '#EF4444', letterSpacing: '-0.01em' }}>{t('logout')}</p>
               <p style={{ fontSize: '12px', color: '#AAA', marginTop: '1px', fontWeight: '500' }}>{t('logout_sub')}</p>
             </div>
-            <div style={{
-              width: '28px', height: '28px', borderRadius: '50%',
-              background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
+            <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#FEF2F2', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <ChevronRight size={14} color="#EF4444" />
             </div>
           </button>
         </div>
       </div>
 
-      {/* Footer */}
       <p style={{ textAlign: 'center', marginTop: '28px', fontSize: '11px', color: '#CCC', fontWeight: '500' }}>
         MarocMiam v1.0 · Made in Morocco 🇲🇦
       </p>
