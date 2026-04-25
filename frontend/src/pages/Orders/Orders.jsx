@@ -369,6 +369,7 @@ export default function Orders() {
   const [tab, setTab]             = useState('all');
   const [ratingOrder, setRatingOrder] = useState(null);
   const [ratedOrders, setRatedOrders] = useState([]);
+  const [refreshing, setRefreshing]   = useState(false);
   const navigate  = useNavigate();
   const { t, isRTL } = useLang();
 
@@ -379,6 +380,7 @@ export default function Orders() {
   }, []);
 
   async function load() {
+    setRefreshing(true);
     try {
       const res = await getOrders();
       setOrders(res.data);
@@ -415,6 +417,7 @@ export default function Orders() {
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
         @keyframes ping { 0%,100%{transform:scale(1);opacity:.4} 50%{transform:scale(1.8);opacity:0} }
         @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+        @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
       `}</style>
 
       {/* Header */}
@@ -425,7 +428,7 @@ export default function Orders() {
             <h1 style={{ color: '#fff', fontSize: '22px', fontWeight: '900', letterSpacing: '-0.02em' }}>Mes Commandes</h1>
           </div>
           <button onClick={load} style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(255,255,255,0.2)', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <RefreshCw size={16} color="#fff" />
+            <RefreshCw size={16} color="#fff" style={{ animation: refreshing ? 'spin 1s linear infinite' : 'none' }} />
           </button>
         </div>
         <div style={{ display: 'flex', gap: '6px' }}>
