@@ -14,7 +14,7 @@ import MapPicker from '../../components/MapPicker';
 
 export default function Checkout() {
   const navigate = useNavigate();
-  const { cart, total: cartTotal, itemCount, clearCart } = useCart();
+  const { cart, restaurantId, total: cartTotal, itemCount, clearCart } = useCart();
   const { user } = useAuth();
   const { t, isRTL } = useLang();
 
@@ -105,7 +105,7 @@ export default function Checkout() {
       if (contactless) finalNotes += '\n📦 Livraison sans contact';
       if (scheduledDelivery && scheduledTime) finalNotes += `\n⏰ Livraison programmée: ${scheduledTime}`;
 
-      const restaurantId = cart[0]?.restaurantId;
+      const restaurantId = restaurantId; // already from useCart
       const items = cart.map(item => ({
         menu_item_id: item.id,
         quantity: item.quantity,
