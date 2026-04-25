@@ -395,8 +395,10 @@ export default function Orders() {
       setRatedOrders(ratedChecks.filter(Boolean));
     } catch (err) {
       if (err.response?.status !== 401) toast.error('Could not load orders');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
     }
-    setLoading(false);
   }
 
   function toggleExpanded(id) {

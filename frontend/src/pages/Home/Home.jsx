@@ -228,11 +228,11 @@ export default function Home() {
 
       {/* ── Map Picker Modal ── */}
       {showMap && (
-        <div onClick={() => setShowMap(false)} style={{
+        <div style={{
           position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
           zIndex: 1000, display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
         }}>
-          <div onClick={e => e.stopPropagation()} style={{
+          <div style={{
             background: '#fff', borderRadius: '24px 24px 0 0',
             width: '100%', maxWidth: '480px', padding: '20px',
             maxHeight: '80vh', overflowY: 'auto',
@@ -249,7 +249,6 @@ export default function Home() {
             </div>
             <MapPicker onSelect={({ address }) => {
               setDeliveryAddress(address);
-              setShowMap(false);
             }} />
             <button onClick={() => setShowMap(false)} style={{
               width: '100%', padding: '14px', borderRadius: '14px', border: 'none',
