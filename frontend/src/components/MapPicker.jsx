@@ -65,6 +65,9 @@ export default function MapPicker({ onSelect }) {
 
     reverseGeocode(coords.lat, coords.lng);
 
+    // Auto-locate on open
+    setTimeout(() => locateMe(), 500);
+
     marker.on('dragend', (e) => {
       const { lat, lng } = e.target.getLatLng();
       setCoords({ lat, lng });
