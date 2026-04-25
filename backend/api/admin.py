@@ -1,20 +1,5 @@
 from django.contrib import admin
-from .models import Restaurant, MenuItem, Order, OrderItem, Courier
-
-# C:\Users\black\marocmiam\backend\api\admin.py
-from django.contrib import admin
 from .models import Restaurant, MenuItem, Order, OrderItem, Courier, FCMToken, UserProfile, Review, PromoCode, ChatMessage
-
-admin.site.register(Restaurant)
-admin.site.register(MenuItem)
-admin.site.register(Order)
-admin.site.register(OrderItem)
-admin.site.register(Courier)
-admin.site.register(FCMToken)
-admin.site.register(UserProfile)
-admin.site.register(Review)
-admin.site.register(PromoCode)
-admin.site.register(ChatMessage)
 
 @admin.register(Restaurant)
 class RestaurantAdmin(admin.ModelAdmin):
@@ -40,4 +25,32 @@ class OrderItemAdmin(admin.ModelAdmin):
 
 @admin.register(Courier)
 class CourierAdmin(admin.ModelAdmin):
-    list_display  = ['user', 'phone', 'is_available']
+    list_display  = ['user', 'phone', 'is_available', 'is_online', 'vehicle']
+
+@admin.register(FCMToken)
+class FCMTokenAdmin(admin.ModelAdmin):
+    list_display  = ['user', 'created_at']
+    search_fields = ['user__username']
+
+@admin.register(UserProfile)
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display  = ['user', 'role', 'status', 'city']
+    list_filter   = ['role', 'status']
+    search_fields = ['user__username', 'restaurant_name']
+
+@admin.register(Review)
+class ReviewAdmin(admin.ModelAdmin):
+    list_display  = ['customer', 'restaurant', 'rating', 'created_at']
+    list_filter   = ['rating']
+    search_fields = ['customer__username', 'restaurant__name']
+
+@admin.register(PromoCode)
+class PromoCodeAdmin(admin.ModelAdmin):
+    list_display  = ['code', 'discount', 'max_uses', 'used_count', 'is_active', 'expires_at']
+    list_filter   = ['is_active']
+    search_fields = ['code']
+
+@admin.register(ChatMessage)
+class ChatMessageAdmin(admin.ModelAdmin):
+    list_display  = ['order', 'sender', 'message', 'created_at']
+    search_fields = ['sender__username']
