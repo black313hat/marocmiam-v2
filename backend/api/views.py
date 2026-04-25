@@ -131,7 +131,7 @@ def send_order_email(order):
         from django.core.mail import send_mail
         items_text = '\n'.join([
             f"{item.quantity}x {item.menu_item.name} - {float(item.price) * item.quantity:.0f} MAD"
-            for item in order.orderitem_set.all()
+            for item in order.items.all()
         ])
         subject = f"Commande #{order.id} livree - MarocMiam"
         message = f"Bonjour {order.customer.first_name or order.customer.username},\n\nVotre commande a ete livree!\n\n{items_text}\n\nTotal: {float(order.total_price):.0f} MAD\n\nMerci d'avoir choisi MarocMiam!"
@@ -362,9 +362,10 @@ def notify_order_status(order):
 
 def notify_new_order(order):
     try:
+        # Find owner by restaurant name
         owner_profile = UserProfile.objects.filter(
             role='restaurant_owner',
-            restaurant=order.restaurant
+            restaurant_name=order.restaurant.name
         ).first()
         if owner_profile:
             tokens = list(FCMToken.objects.filter(user=owner_profile.user).values_list('token', flat=True))
@@ -377,7 +378,6 @@ def notify_new_order(order):
                 )
     except Exception as e:
         print(f'Notify owner error: {e}')
-
 
 # ───── USER LIST (legacy) ─────
 
