@@ -144,3 +144,32 @@ class UserProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.role}"
+    
+    
+    
+# ── ADD TO models.py ──
+
+# PromoCode model
+class PromoCode(models.Model):
+    code = models.CharField(max_length=20, unique=True)
+    discount = models.IntegerField(default=10)  # percentage
+    max_uses = models.IntegerField(default=100)
+    used_count = models.IntegerField(default=0)
+    is_active = models.BooleanField(default=True)
+    min_order = models.DecimalField(max_digits=8, decimal_places=2, default=0)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.code} - {self.discount}%"
+
+
+# ChatMessage model
+class ChatMessage(models.Model):
+    order = models.ForeignKey('Order', on_delete=models.CASCADE, related_name='messages')
+    sender = models.ForeignKey(User, on_delete=models.CASCADE)
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Message from {self.sender.username} on Order #{self.order.id}"

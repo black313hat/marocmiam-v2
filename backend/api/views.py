@@ -1096,3 +1096,139 @@ def check_review(request, order_id):
         return Response({'has_review': has_review, 'rating': order.review.rating if has_review else None})
     except Order.DoesNotExist:
         return Response({'error': 'Order not found'}, status=404)
+    
+    
+    
+
+# ── ADD TO views.py ──
+
+# Promo Code Apply
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def apply_promo_code(request):
+    from .models import PromoCode
+    from django.utils import timezone
+
+    code = request.data.get('code', '').strip().upper()
+    total = float(request.data.get('total', 0))
+
+    try:
+        promo = PromoCode.objects.get(code=code, is_active=True)
+    except PromoCode.DoesNotExist:
+        return Response({'error': 'Code promo invalide ou expiré'}, status=400)
+
+    if promo.expires_at and promo.expires_at < timezone.now():
+        return Response({'error': 'Code promo expiré'}, status=400)
+
+    if promo.used_count >= promo.max_uses:
+        return Response({'error': 'Code promo épuisé'}, status=400)
+
+    if total < float(promo.min_order):
+        return Response({'error': f'Commande minimum de {promo.min_order} MAD requis'}, status=400)
+
+    discount_amount = round(total * promo.discount / 100, 2)
+
+    return Response({
+        'code': promo.code,
+        'discount': promo.discount,
+        'discount_amount': discount_amount,
+        'new_total': round(total - discount_amount, 2),
+    })
+
+
+# Order Chat
+@api_view(['GET', 'POST'])
+@permission_classes([permissions.IsAuthenticated])
+def order_chat(request, order_id):
+    from .models import ChatMessage
+
+    try:
+        order = Order.objects.get(id=order_id)
+        # Allow customer, courier, or admin
+        is_customer = order.customer == request.user
+        is_admin = request.user.is_staff
+        try:
+            courier = Courier.objects.get(user=request.user)
+            is_courier = courier.current_order == order
+        except:
+            is_courier = False
+
+        if not (is_customer or is_admin or is_courier):
+            return Response({'error': 'Not authorized'}, status=403)
+
+    except Order.DoesNotExist:
+        return Response({'error': 'Order not found'}, status=404)
+
+    if request.method == 'GET':
+        messages = ChatMessage.objects.filter(order=order).order_by('created_at')
+        data = [{
+            'id': m.id,
+            'sender': m.sender.username,
+            'message': m.message,
+            'created_at': m.created_at,
+            'is_me': m.sender == request.user,
+        } for m in messages]
+        return Response(data)
+
+    elif request.method == 'POST':
+        message = request.data.get('message', '').strip()
+        if not message:
+            return Response({'error': 'Message cannot be empty'}, status=400)
+        msg = ChatMessage.objects.create(order=order, sender=request.user, message=message)
+        return Response({
+            'id': msg.id,
+            'sender': msg.sender.username,
+            'message': msg.message,
+            'created_at': msg.created_at,
+        }, status=201)
+
+
+# Admin Promo Code Management
+@api_view(['GET', 'POST'])
+@permission_classes([permissions.IsAdminUser])
+def admin_promo_codes(request):
+    from .models import PromoCode
+    if request.method == 'GET':
+        promos = PromoCode.objects.all().order_by('-created_at')
+        data = [{
+            'id': p.id, 'code': p.code, 'discount': p.discount,
+            'max_uses': p.max_uses, 'used_count': p.used_count,
+            'is_active': p.is_active, 'min_order': float(p.min_order),
+            'expires_at': p.expires_at,
+        } for p in promos]
+        return Response(data)
+
+    elif request.method == 'POST':
+        from .models import PromoCode
+        code = request.data.get('code', '').upper().strip()
+        if not code:
+            return Response({'error': 'Code required'}, status=400)
+        if PromoCode.objects.filter(code=code).exists():
+            return Response({'error': 'Code already exists'}, status=400)
+        promo = PromoCode.objects.create(
+            code=code,
+            discount=request.data.get('discount', 10),
+            max_uses=request.data.get('max_uses', 100),
+            min_order=request.data.get('min_order', 0),
+        )
+        return Response({'id': promo.id, 'code': promo.code}, status=201)
+
+
+@api_view(['PATCH', 'DELETE'])
+@permission_classes([permissions.IsAdminUser])
+def admin_promo_code_detail(request, pk):
+    from .models import PromoCode
+    try:
+        promo = PromoCode.objects.get(pk=pk)
+    except PromoCode.DoesNotExist:
+        return Response({'error': 'Not found'}, status=404)
+
+    if request.method == 'DELETE':
+        promo.delete()
+        return Response({'status': 'deleted'})
+
+    promo.is_active = request.data.get('is_active', promo.is_active)
+    promo.discount = request.data.get('discount', promo.discount)
+    promo.save()
+    return Response({'status': 'updated'})
+

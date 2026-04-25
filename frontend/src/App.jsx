@@ -15,6 +15,10 @@ import ApplyRestaurant from './pages/Apply/ApplyRestaurant';
 import ApplyCourier from './pages/Apply/ApplyCourier';
 import CourierApp from './pages/CourierApp/CourierApp';
 import RestaurantOwnerApp from './pages/RestaurantOwner/RestaurantOwnerApp';
+import Search from './pages/Search/Search';
+import Pharmacies from './pages/Pharmacies/Pharmacies';
+import Favorites from './pages/Favorites/Favorites';
+
 
 const PrivateRoute = ({ children }) => {
   const { user } = useAuth();
@@ -42,6 +46,11 @@ export default function App() {
           <Route path="/restaurant-owner" element={<PrivateRoute><RestaurantOwnerApp /></PrivateRoute>} />
           <Route path="/restaurant-dashboard" element={<Navigate to="/restaurant-owner" />} />
           <Route path="/courier-dashboard" element={<Navigate to="/courier-app" />} />
+          // Add inside Routes:
+          <Route path="/search" element={<Search />} />
+          <Route path="/pharmacies" element={<Pharmacies />} />
+          <Route path="/favorites" element={<PrivateRoute><Favorites /></PrivateRoute>} />
+
         </Route>
       </Routes>
     </BrowserRouter>

@@ -81,4 +81,12 @@ urlpatterns = [
     path('owner/menu/add/', views.owner_add_menu_item),
     path('owner/menu/<int:item_id>/', views.owner_menu_item),
     path('owner/stats/', views.owner_stats),
+    
+    
+    # ── ADD TO urls.py ──
+    path('promo/apply/', views.apply_promo_code),
+    path('orders/<int:order_id>/chat/', views.order_chat),
+    path('admin/promo-codes/', views.admin_promo_codes),
+    path('admin/promo-codes/<int:pk>/', views.admin_promo_code_detail),
+
 ]

@@ -1,5 +1,5 @@
 import { Outlet, Link, useLocation } from 'react-router-dom';
-import { Home, ShoppingBag, User, Grid } from 'lucide-react';
+import { Home, ShoppingBag, User, Grid, Search } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useLang } from '../context/LanguageContext';
@@ -11,10 +11,11 @@ export default function Layout() {
   const { lang, changeLang, t } = useLang();
 
   const navItems = [
-    { path: '/', icon: Home, label: t('home') },
-    { path: '/restaurants', icon: Grid, label: t('order') },
-    { path: '/cart', icon: ShoppingBag, label: t('cart'), badge: itemCount },
-    { path: '/profile', icon: User, label: t('profile') },
+    { path: '/',            icon: Home,       label: t('home') },
+    { path: '/restaurants', icon: Grid,       label: t('order') },
+    { path: '/search',      icon: Search,     label: 'Search' },
+    { path: '/cart',        icon: ShoppingBag, label: t('cart'), badge: itemCount },
+    { path: '/profile',     icon: User,       label: t('profile') },
   ];
 
   return (
@@ -38,7 +39,7 @@ export default function Layout() {
             {['fr', 'ar', 'en'].map(l => (
               <button key={l} onClick={() => changeLang(l)} style={{
                 padding: '4px 10px', borderRadius: '16px', fontSize: '11px',
-                fontWeight: '700', cursor: 'pointer',
+                fontWeight: '700', cursor: 'pointer', border: 'none',
                 background: lang === l ? '#FF6B00' : 'transparent',
                 color: lang === l ? '#fff' : '#999',
               }}>
@@ -51,6 +52,7 @@ export default function Layout() {
             <Link to="/login" style={{
               fontSize: '13px', fontWeight: '700', color: '#fff',
               background: '#FF6B00', padding: '7px 18px', borderRadius: '20px',
+              textDecoration: 'none',
             }}>
               {t('login')}
             </Link>
@@ -59,7 +61,7 @@ export default function Layout() {
               width: '34px', height: '34px', borderRadius: '50%',
               background: '#FF6B00', color: '#fff',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontWeight: '800', fontSize: '14px',
+              fontWeight: '800', fontSize: '14px', textDecoration: 'none',
             }}>
               {(user.first_name || user.username)[0].toUpperCase()}
             </Link>
@@ -84,7 +86,8 @@ export default function Layout() {
           const active = location.pathname === path;
           return (
             <Link key={path} to={path} style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', padding: '4px 16px',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', padding: '4px 12px',
+              textDecoration: 'none',
             }}>
               <div style={{ position: 'relative' }}>
                 <Icon size={22} color={active ? '#FF6B00' : '#ccc'} strokeWidth={active ? 2.5 : 1.8} />
