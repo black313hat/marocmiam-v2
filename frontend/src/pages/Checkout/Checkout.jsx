@@ -31,6 +31,7 @@ export default function Checkout() {
   const [showMap, setShowMap]                 = useState(false);
   const [showSuccess, setShowSuccess]         = useState(false);
   const [createdOrderId, setCreatedOrderId]   = useState(null);
+  const [finalTotal, setFinalTotal]           = useState(0);
   const [scheduledDelivery, setScheduledDelivery] = useState(false);
   const [scheduledTime, setScheduledTime]     = useState('');
   const [contactless, setContactless]         = useState(false);
@@ -126,6 +127,7 @@ export default function Checkout() {
       });
 
       localStorage.setItem('last_order_time', Date.now().toString());
+      setFinalTotal(total);
       clearCart();
       setCreatedOrderId(res.data.id);
       setShowSuccess(true);
@@ -167,7 +169,7 @@ export default function Checkout() {
         </motion.div>
         <motion.p initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
           style={{ color: '#fff', fontSize: '32px', fontWeight: '900', marginBottom: '8px' }}>
-          {total.toFixed(0)} MAD
+          {finalTotal.toFixed(0)} MAD
         </motion.p>
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
           style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#9ca3af', fontSize: '14px', marginBottom: '8px' }}>
