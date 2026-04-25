@@ -1,6 +1,21 @@
 from django.contrib import admin
 from .models import Restaurant, MenuItem, Order, OrderItem, Courier
 
+# C:\Users\black\marocmiam\backend\api\admin.py
+from django.contrib import admin
+from .models import Restaurant, MenuItem, Order, OrderItem, Courier, FCMToken, UserProfile, Review, PromoCode, ChatMessage
+
+admin.site.register(Restaurant)
+admin.site.register(MenuItem)
+admin.site.register(Order)
+admin.site.register(OrderItem)
+admin.site.register(Courier)
+admin.site.register(FCMToken)
+admin.site.register(UserProfile)
+admin.site.register(Review)
+admin.site.register(PromoCode)
+admin.site.register(ChatMessage)
+
 @admin.register(Restaurant)
 class RestaurantAdmin(admin.ModelAdmin):
     list_display  = ['name', 'city', 'category', 'is_open', 'rating']
