@@ -6,28 +6,28 @@ import { useLang } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
 
 const CATEGORIES = [
-  { key: 'Restaurant', label: 'Restos',   img: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&q=80', color: '#FFF3E8' },
-  { key: 'Fast Food',  label: 'Fast Food', img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&q=80', color: '#FFF9E6' },
-  { key: 'Café',       label: 'Cafés',     img: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=200&q=80', color: '#F0FDF4' },
-  { key: 'Barbecue',   label: 'Grills',    img: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&q=80', color: '#FEF2F2' },
-  { key: 'Supermarket',label: 'Marché',    img: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=200&q=80', color: '#EFF6FF' },
+  { key: 'Restaurant', label: 'Restos', img: 'https://images.unsplash.com/photo-1555396273-367ea4eb4db5?w=200&q=80', color: '#FFF3E8' },
+  { key: 'Fast Food', label: 'Fast Food', img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=200&q=80', color: '#FFF9E6' },
+  { key: 'Café', label: 'Cafés', img: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=200&q=80', color: '#F0FDF4' },
+  { key: 'Barbecue', label: 'Grills', img: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=200&q=80', color: '#FEF2F2' },
+  { key: 'Supermarket', label: 'Marché', img: 'https://images.unsplash.com/photo-1542838132-92c53300491e?w=200&q=80', color: '#EFF6FF' },
 ];
 
 const PROMOS = [
   { bg: '#FFF3E0', title: 'Craving something amazing?', discount: '50%', sub: 'On selected restaurants', btn: 'ORDER NOW', img: '🍔', color: '#FF6B00' },
-  { bg: '#F0FFF4', title: 'Fresh & Healthy meals',      discount: '25%', sub: 'On your first order',      btn: 'ORDER NOW', img: '🥗', color: '#16A34A' },
-  { bg: '#FFF0F6', title: 'Sweet treats await',         discount: '30%', sub: 'On desserts today',        btn: 'ORDER NOW', img: '🍰', color: '#EC4899' },
+  { bg: '#F0FFF4', title: 'Fresh & Healthy meals', discount: '25%', sub: 'On your first order', btn: 'ORDER NOW', img: '🥗', color: '#16A34A' },
+  { bg: '#FFF0F6', title: 'Sweet treats await', discount: '30%', sub: 'On desserts today', btn: 'ORDER NOW', img: '🍰', color: '#EC4899' },
 ];
 
 export default function Home() {
-  const navigate  = useNavigate();
+  const navigate = useNavigate();
   const { t, isRTL } = useLang();
-  const { user }  = useAuth();
+  const { user } = useAuth();
   const [restaurants, setRestaurants] = useState([]);
-  const [promoIdx, setPromoIdx]       = useState(0);
+  const [promoIdx, setPromoIdx] = useState(0);
 
   useEffect(() => {
-    getRestaurants().then(res => setRestaurants(res.data)).catch(() => {});
+    getRestaurants().then(res => setRestaurants(res.data)).catch(() => { });
     const timer = setInterval(() => setPromoIdx(i => (i + 1) % PROMOS.length), 4000);
     return () => clearInterval(timer);
   }, []);
@@ -49,10 +49,12 @@ export default function Home() {
             <MapPin size={16} color='#FF6B00' />
             <div>
               <p style={{ fontSize: '11px', color: '#999' }}>Livraison à</p>
-              <p style={{ fontSize: '14px', fontWeight: '800', color: '#1a1a1a' }}>Al Hoceima, Maroc ▾</p>
+              <p onClick={() => navigate('/restaurants')} style={{ fontSize: '14px', fontWeight: '800', color: '#1a1a1a', cursor: 'pointer' }}>
+                Al Hoceima, Maroc ▾
+              </p>
             </div>
           </div>
-          <button style={{ position: 'relative', padding: '8px', background: '#f5f5f5', borderRadius: '12px', border: 'none', cursor: 'pointer' }}>
+          <button onClick={() => navigate('/orders')} style={{ position: 'relative', padding: '8px', background: '#f5f5f5', borderRadius: '12px', border: 'none', cursor: 'pointer' }}>
             <Bell size={20} color='#1a1a1a' />
             <span style={{ position: 'absolute', top: '6px', right: '6px', width: '8px', height: '8px', background: '#FF6B00', borderRadius: '50%' }} />
           </button>
