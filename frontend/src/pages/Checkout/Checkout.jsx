@@ -399,6 +399,24 @@ export default function Checkout() {
             <span style={{ fontSize: '20px', fontWeight: '900', color: '#FF6B00' }}>{total.toFixed(0)} MAD</span>
           </div>
         </div>
+
+        {/* Submit Button */}
+        <button onClick={handleSubmit}
+          disabled={submitting || !address.trim() || !phone.trim() || (scheduledDelivery && !scheduledTime) || (!hasExactAmount && customerAmount && parseFloat(customerAmount) < total)}
+          style={{
+            width: '100%', padding: '18px', borderRadius: '16px', border: 'none',
+            background: submitting ? '#6b7280' : 'linear-gradient(135deg, #FF6B00, #FF9A3C)',
+            color: '#fff', fontSize: '16px', fontWeight: '900',
+            cursor: submitting ? 'not-allowed' : 'pointer',
+            boxShadow: submitting ? 'none' : '0 8px 32px rgba(255,107,0,0.4)',
+            fontFamily: 'inherit', marginBottom: '16px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+          }}>
+          {submitting
+            ? <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> Commande en cours...</>
+            : `🛵 Commander · ${total.toFixed(0)} MAD`
+          }
+        </button>
       </form>
 
       {/* Map Modal */}
@@ -426,25 +444,6 @@ export default function Checkout() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Submit button */}
-      <div style={{ position: 'fixed', bottom: '70px', left: '50%', transform: 'translateX(-50%)', width: '100%', maxWidth: '480px', padding: '0 16px 16px', background: 'linear-gradient(to top, #030712 70%, transparent)', zIndex: 40 }}>
-        <button type="submit" form="checkout-form" onClick={handleSubmit}
-          disabled={submitting || !address.trim() || !phone.trim() || (scheduledDelivery && !scheduledTime) || (!hasExactAmount && customerAmount && parseFloat(customerAmount) < total)}
-          style={{
-            width: '100%', padding: '16px', borderRadius: '16px', border: 'none',
-            background: submitting ? '#9ca3af' : 'linear-gradient(135deg, #FF6B00, #FF9A3C)',
-            color: '#fff', fontSize: '16px', fontWeight: '800', cursor: submitting ? 'not-allowed' : 'pointer',
-            boxShadow: '0 8px 32px rgba(255,107,0,0.4)', fontFamily: 'inherit',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
-          }}>
-          {submitting ? (
-            <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> Commande en cours...</>
-          ) : (
-            `🛵 Commander · ${total.toFixed(0)} MAD`
-          )}
-        </button>
-      </div>
 
       <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
     </div>
