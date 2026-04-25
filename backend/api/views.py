@@ -276,6 +276,8 @@ def save_fcm_token(request):
     token = request.data.get('token')
     if not token:
         return Response({'error': 'No token provided'}, status=400)
+    # Delete old token if it belonged to another user
+    FCMToken.objects.filter(token=token).delete()
     FCMToken.objects.get_or_create(user=request.user, token=token)
     return Response({'status': 'token saved'})
 
