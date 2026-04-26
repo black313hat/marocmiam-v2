@@ -304,16 +304,21 @@ export default function Checkout() {
           <label style={labelStyle}>💳 Mode de paiement</label>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
             {[
-              { key: 'cash', icon: <Banknote size={22} />, label: 'Espèces' },
-              { key: 'card', icon: <CreditCard size={22} />, label: 'Carte' },
+              { key: 'cash', icon: <Banknote size={22} />, label: 'Espèces', badge: null },
+              { key: 'card', icon: <CreditCard size={22} />, label: 'Carte', badge: 'Bientôt' },
             ].map(m => {
               const active = paymentMethod === m.key;
-              const disabled = m.key === 'cash' && contactless;
+              const disabled = (m.key === 'cash' && contactless) || m.key === 'card';
               return (
                 <button key={m.key} type="button" onClick={() => !disabled && setPaymentMethod(m.key)} disabled={disabled}
-                  style={{ padding: '14px', borderRadius: '14px', border: `2px solid ${active && !disabled ? '#FF6B00' : '#1f2937'}`, background: active && !disabled ? 'rgba(255,107,0,0.1)' : '#1f2937', cursor: disabled ? 'not-allowed' : 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', opacity: disabled ? 0.4 : 1 }}>
+                  style={{ padding: '14px', borderRadius: '14px', border: `2px solid ${active && !disabled ? '#FF6B00' : '#1f2937'}`, background: active && !disabled ? 'rgba(255,107,0,0.1)' : '#1f2937', cursor: disabled ? 'not-allowed' : 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', opacity: disabled ? 0.5 : 1 }}>
                   <span style={{ color: active && !disabled ? '#FF6B00' : '#9ca3af' }}>{m.icon}</span>
                   <span style={{ fontSize: '12px', fontWeight: '700', color: active && !disabled ? '#FF6B00' : '#9ca3af' }}>{m.label}</span>
+                  {m.badge && (
+                    <span style={{ fontSize: '9px', fontWeight: '800', background: '#374151', color: '#9ca3af', padding: '2px 6px', borderRadius: '8px', letterSpacing: '0.05em' }}>
+                      {m.badge}
+                    </span>
+                  )}
                 </button>
               );
             })}

@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { getOrders } from '../../services/api';
 import API from '../../services/api';
 import { useNavigate } from 'react-router-dom';
-import { RefreshCw, ChevronDown, ChevronUp, MapPin, Clock, Star, X } from 'lucide-react';
+import { RefreshCw, ChevronDown, ChevronUp, MapPin, Clock, Star, X, MessageCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import toast from 'react-hot-toast';
 import { useLang } from '../../context/LanguageContext';
+import LiveCourierMap from '../../components/LiveCourierMap';
+import OrderChat from '../../components/OrderChat';
 
 const STEPS = [
   { key: 'pending',   emoji: '📋', label: 'Reçue' },
@@ -165,6 +167,8 @@ function ActiveOrderCard({ order, expanded, onToggle }) {
   const s = STATUS_META[order.status] || STATUS_META.pending;
   const isOpen = expanded === order.id;
   const items = order.order_items || [];
+  const isPickedUp = order.status === 'picked_up';
+  const [showChat, setShowChat] = useState(false);
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
@@ -205,6 +209,24 @@ function ActiveOrderCard({ order, expanded, onToggle }) {
         {isOpen && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.25 }} style={{ overflow: 'hidden' }}>
             <div style={{ padding: '0 16px 16px', borderTop: '1px solid #F5F5F5' }}>
+
+              {/* Live Courier Map — only when picked_up */}
+              {isPickedUp && (
+                <div style={{ margin: '12px 0' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                    <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', animation: 'ping 1.2s ease-in-out infinite', display: 'inline-block' }} />
+                    <p style={{ fontSize: '12px', fontWeight: '700', color: '#10b981' }}>Livreur en route — suivi en direct</p>
+                  </div>
+                  <LiveCourierMap
+                    orderId={order.id}
+                    deliveryLat={order.delivery_lat}
+                    deliveryLng={order.delivery_lng}
+                    restaurantLat={order.restaurant_lat}
+                    restaurantLng={order.restaurant_lng}
+                  />
+                </div>
+              )}
+
               <div style={{ background: '#F9F9F9', borderRadius: '12px', padding: '11px 13px', margin: '12px 0', display: 'flex', alignItems: 'flex-start', gap: '8px', border: '1px solid #F0F0F0' }}>
                 <MapPin size={14} color="#FF6B00" style={{ flexShrink: 0, marginTop: '1px' }} />
                 <p style={{ fontSize: '12px', color: '#666', lineHeight: 1.5, fontWeight: '500' }}>{order.delivery_address}</p>
@@ -232,7 +254,26 @@ function ActiveOrderCard({ order, expanded, onToggle }) {
                 </div>
                 <p style={{ fontSize: '11px', color: '#AAA', marginTop: '5px' }}>{order.payment_method === 'cash' ? '💵 Espèces' : '💳 Carte'}</p>
               </div>
+
+              {/* Chat button */}
+              {isPickedUp && (
+                <button onClick={() => setShowChat(true)} style={{
+                  width: '100%', marginTop: '12px', padding: '12px', borderRadius: '12px',
+                  background: 'linear-gradient(135deg, #3B82F6, #2563EB)',
+                  color: '#fff', fontWeight: '800', fontSize: '13px',
+                  border: 'none', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                  fontFamily: 'inherit', boxShadow: '0 4px 14px rgba(59,130,246,0.3)',
+                }}>
+                  <MessageCircle size={15} /> Contacter le livreur
+                </button>
+              )}
             </div>
+
+          {/* Order Chat Modal */}
+          <AnimatePresence>
+            {showChat && <OrderChat orderId={order.id} onClose={() => setShowChat(false)} />}
+          </AnimatePresence>
           </motion.div>
         )}
       </AnimatePresence>
