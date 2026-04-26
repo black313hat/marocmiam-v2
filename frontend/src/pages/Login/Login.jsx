@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Eye, EyeOff, ArrowLeft, User, Lock, Mail, ChevronRight } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google';
@@ -7,13 +7,12 @@ import API from '../../services/api';
 import toast from 'react-hot-toast';
 
 export default function Login() {
-  const [isRegister, setIsRegister]     = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [form, setForm]                 = useState({ username: '', email: '', password: '', first_name: '', last_name: '' });
-  const [loading, setLoading]           = useState(false);
+  const [isRegister, setIsRegister]       = useState(false);
+  const [showPassword, setShowPassword]   = useState(false);
+  const [form, setForm]                   = useState({ username: '', email: '', password: '', first_name: '', last_name: '' });
+  const [loading, setLoading]             = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const { login, register } = useAuth();
-  const navigate = useNavigate();
 
   const update = (k, v) => setForm(f => ({ ...f, [k]: v }));
 
@@ -28,30 +27,29 @@ export default function Login() {
         await login({ username: form.username, password: form.password });
         toast.success('Bon retour! 👋');
       }
-      navigate('/');
+      window.location.href = '/';
     } catch (err) {
       toast.error(err.response?.data?.error || 'Une erreur est survenue');
     }
     setLoading(false);
   };
 
-  // Google login handler
   const handleGoogleSuccess = async (tokenResponse) => {
     setGoogleLoading(true);
     try {
-      // Get user info from Google using access token
+      // Get user info from Google
       const userInfoRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
         headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
       });
       const userInfo = await userInfoRes.json();
 
-      // Send to our backend
+      // Send to Django backend
       const res = await API.post('/auth/google/', {
-        email: userInfo.email,
-        first_name: userInfo.given_name || '',
-        last_name: userInfo.family_name || '',
-        google_id: userInfo.sub,
-        picture: userInfo.picture || '',
+        email:      userInfo.email,
+        first_name: userInfo.given_name  || '',
+        last_name:  userInfo.family_name || '',
+        google_id:  userInfo.sub,
+        picture:    userInfo.picture     || '',
       });
 
       // Store JWT tokens
@@ -65,7 +63,9 @@ export default function Login() {
           ? `Bienvenue ${res.data.user.first_name || res.data.user.username}! 🎉`
           : `Bon retour ${res.data.user.first_name || res.data.user.username}! 👋`
       );
-      navigate('/');
+
+      // Full reload to update AuthContext state
+      window.location.href = '/';
     } catch (err) {
       console.error('Google login error:', err);
       toast.error('Connexion Google échouée. Réessayez.');
@@ -87,20 +87,19 @@ export default function Login() {
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
         @keyframes slideUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
-        @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+        @keyframes fadeIn  { from { opacity:0; } to { opacity:1; } }
+        @keyframes spin    { from { transform:rotate(0deg); } to { transform:rotate(360deg); } }
         .input-field:focus { border-color: #FF6B00 !important; outline: none; background: #fff !important; }
         .submit-btn:active { transform: scale(0.98); }
-        .tab-btn { transition: all 0.2s; }
-        .google-btn:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important; transform: translateY(-1px); }
+        .tab-btn           { transition: all 0.2s; }
+        .google-btn:hover  { box-shadow: 0 4px 16px rgba(0,0,0,0.12) !important; transform: translateY(-1px); }
         .google-btn:active { transform: scale(0.98); }
       `}</style>
 
-      {/* Top illustration area */}
+      {/* Header */}
       <div style={{
         background: 'linear-gradient(145deg, #FF6B00 0%, #FF9A3C 100%)',
-        padding: '48px 24px 40px',
-        borderRadius: '0 0 40px 40px',
+        padding: '48px 24px 40px', borderRadius: '0 0 40px 40px',
         position: 'relative', overflow: 'hidden',
       }}>
         <div style={{ position: 'absolute', top: -30, right: -30, width: '120px', height: '120px', borderRadius: '50%', background: 'rgba(255,255,255,0.1)' }} />
@@ -121,24 +120,19 @@ export default function Login() {
         </div>
       </div>
 
-      {/* Form area */}
+      {/* Form */}
       <div style={{ flex: 1, padding: '28px 20px 32px', animation: 'fadeIn 0.4s ease 0.1s both' }}>
 
-        {/* Google Login Button */}
-        <button
-          className="google-btn"
-          onClick={() => googleLogin()}
-          disabled={googleLoading}
-          style={{
-            width: '100%', padding: '13px 20px', borderRadius: '14px',
-            border: '1.5px solid #E8E8E8', background: googleLoading ? '#F5F5F5' : '#fff',
-            cursor: googleLoading ? 'not-allowed' : 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
-            fontSize: '14px', fontWeight: '700', color: '#333',
-            fontFamily: 'inherit', transition: 'all 0.2s',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.06)',
-            marginBottom: '20px',
-          }}>
+        {/* Google Button */}
+        <button className="google-btn" onClick={() => googleLogin()} disabled={googleLoading} style={{
+          width: '100%', padding: '13px 20px', borderRadius: '14px',
+          border: '1.5px solid #E8E8E8', background: googleLoading ? '#F5F5F5' : '#fff',
+          cursor: googleLoading ? 'not-allowed' : 'pointer',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+          fontSize: '14px', fontWeight: '700', color: '#333',
+          fontFamily: 'inherit', transition: 'all 0.2s',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.06)', marginBottom: '20px',
+        }}>
           {googleLoading ? (
             <span style={{ display: 'inline-block', animation: 'spin 1s linear infinite' }}>⏳</span>
           ) : (
@@ -159,7 +153,7 @@ export default function Login() {
           <div style={{ flex: 1, height: '1px', background: '#EBEBEB' }} />
         </div>
 
-        {/* Toggle tabs */}
+        {/* Tabs */}
         <div style={{ display: 'flex', background: '#F0F0F0', borderRadius: '14px', padding: '4px', marginBottom: '24px' }}>
           {[{ k: false, l: 'Connexion' }, { k: true, l: 'Inscription' }].map(({ k, l }) => (
             <button key={String(k)} className="tab-btn" onClick={() => setIsRegister(k)} style={{
@@ -173,11 +167,11 @@ export default function Login() {
           ))}
         </div>
 
-        {/* Register fields */}
+        {/* Register extra fields */}
         {isRegister && (
           <div style={{ display: 'flex', gap: '10px' }}>
-            <Field icon={<User size={16} color="#999" />} placeholder="Prénom" value={form.first_name} onChange={v => update('first_name', v)} />
-            <Field icon={<User size={16} color="#999" />} placeholder="Nom" value={form.last_name} onChange={v => update('last_name', v)} />
+            <Field icon={<User size={16} color="#999" />} placeholder="Prénom"   value={form.first_name} onChange={v => update('first_name', v)} />
+            <Field icon={<User size={16} color="#999" />} placeholder="Nom"      value={form.last_name}  onChange={v => update('last_name', v)} />
           </div>
         )}
 
@@ -192,23 +186,13 @@ export default function Login() {
           <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', zIndex: 1 }}>
             <Lock size={16} color="#999" />
           </div>
-          <input
-            className="input-field"
-            type={showPassword ? 'text' : 'password'}
-            placeholder="Mot de passe"
-            value={form.password}
+          <input className="input-field" type={showPassword ? 'text' : 'password'}
+            placeholder="Mot de passe" value={form.password}
             onChange={e => update('password', e.target.value)}
             onKeyDown={e => e.key === 'Enter' && handleSubmit()}
-            style={{
-              width: '100%', padding: '14px 48px 14px 40px', borderRadius: '14px',
-              border: '1.5px solid #E8E8E8', fontSize: '14px', fontWeight: '500',
-              background: '#F8F8F8', boxSizing: 'border-box', fontFamily: 'inherit',
-            }}
+            style={{ width: '100%', padding: '14px 48px 14px 40px', borderRadius: '14px', border: '1.5px solid #E8E8E8', fontSize: '14px', fontWeight: '500', background: '#F8F8F8', boxSizing: 'border-box', fontFamily: 'inherit' }}
           />
-          <button onClick={() => setShowPassword(!showPassword)} style={{
-            position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)',
-            background: 'none', border: 'none', cursor: 'pointer', padding: '4px',
-          }}>
+          <button onClick={() => setShowPassword(!showPassword)} style={{ position: 'absolute', right: '14px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', padding: '4px' }}>
             {showPassword ? <EyeOff size={18} color="#999" /> : <Eye size={18} color="#999" />}
           </button>
         </div>
@@ -228,13 +212,10 @@ export default function Login() {
           )}
         </button>
 
-        {/* Switch mode */}
+        {/* Switch */}
         <p style={{ textAlign: 'center', fontSize: '14px', color: '#888', marginTop: '20px' }}>
           {isRegister ? 'Déjà un compte ?' : 'Pas encore de compte ?'}
-          <button onClick={() => setIsRegister(!isRegister)} style={{
-            background: 'none', border: 'none', color: '#FF6B00', fontWeight: '800',
-            marginLeft: '6px', cursor: 'pointer', fontSize: '14px', fontFamily: 'inherit',
-          }}>
+          <button onClick={() => setIsRegister(!isRegister)} style={{ background: 'none', border: 'none', color: '#FF6B00', fontWeight: '800', marginLeft: '6px', cursor: 'pointer', fontSize: '14px', fontFamily: 'inherit' }}>
             {isRegister ? 'Se connecter' : "S'inscrire"}
           </button>
         </p>
@@ -253,18 +234,9 @@ function Field({ icon, placeholder, value, onChange, type = 'text' }) {
       <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', zIndex: 1 }}>
         {icon}
       </div>
-      <input
-        className="input-field"
-        type={type}
-        placeholder={placeholder}
-        value={value}
+      <input className="input-field" type={type} placeholder={placeholder} value={value}
         onChange={e => onChange(e.target.value)}
-        style={{
-          width: '100%', padding: '14px 14px 14px 40px', borderRadius: '14px',
-          border: '1.5px solid #E8E8E8', fontSize: '14px', fontWeight: '500',
-          background: '#F8F8F8', boxSizing: 'border-box',
-          fontFamily: "'Plus Jakarta Sans', sans-serif",
-        }}
+        style={{ width: '100%', padding: '14px 14px 14px 40px', borderRadius: '14px', border: '1.5px solid #E8E8E8', fontSize: '14px', fontWeight: '500', background: '#F8F8F8', boxSizing: 'border-box', fontFamily: "'Plus Jakarta Sans', sans-serif" }}
       />
     </div>
   );
