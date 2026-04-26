@@ -1232,3 +1232,82 @@ def admin_promo_code_detail(request, pk):
     promo.save()
     return Response({'status': 'updated'})
 
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
+from rest_framework_simplejwt.tokens import RefreshToken
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def google_login(request):
+    """
+    Accepts Google ID token from frontend.
+    Verifies it, creates or finds user, returns JWT.
+    POST /api/auth/google/
+    Body: { "credential": "<google_id_token>" }
+    """
+    credential = request.data.get('credential')
+    if not credential:
+        return Response({'error': 'No credential provided'}, status=400)
+
+    try:
+        # Verify the Google ID token
+        from django.conf import settings
+        idinfo = id_token.verify_oauth2_token(
+            credential,
+            google_requests.Request(),
+            settings.GOOGLE_CLIENT_ID
+        )
+
+        # Extract user info from token
+        email      = idinfo.get('email')
+        first_name = idinfo.get('given_name', '')
+        last_name  = idinfo.get('family_name', '')
+        picture    = idinfo.get('picture', '')
+        google_id  = idinfo.get('sub')
+
+        if not email:
+            return Response({'error': 'Could not get email from Google'}, status=400)
+
+        # Find or create user by email
+        user, created = User.objects.get_or_create(
+            email=email,
+            defaults={
+                'username': email.split('@')[0] + '_' + google_id[-6:],
+                'first_name': first_name,
+                'last_name': last_name,
+            }
+        )
+
+        # Update name if user already exists but names are empty
+        if not created:
+            updated = False
+            if not user.first_name and first_name:
+                user.first_name = first_name
+                updated = True
+            if not user.last_name and last_name:
+                user.last_name = last_name
+                updated = True
+            if updated:
+                user.save()
+
+        # Ensure UserProfile exists
+        profile, _ = UserProfile.objects.get_or_create(
+            user=user,
+            defaults={'role': 'customer', 'status': 'approved'}
+        )
+
+        # Generate JWT tokens
+        refresh = RefreshToken.for_user(user)
+
+        return Response({
+            'user': UserSerializer(user).data,
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'created': created,
+        })
+
+    except ValueError as e:
+        return Response({'error': f'Invalid Google token: {str(e)}'}, status=400)
+    except Exception as e:
+        print(f'Google login error: {e}')
+        return Response({'error': 'Google authentication failed'}, status=500)

@@ -7,6 +7,8 @@ urlpatterns = [
     path('auth/register/', views.register),
     path('auth/login/', views.login),
     path('auth/refresh/', TokenRefreshView.as_view()),
+    path('auth/google/', views.google_login),
+
 
     # Users (legacy)
     path('admin/users/<int:pk>/profile-role/', views.update_user_profile_role),
