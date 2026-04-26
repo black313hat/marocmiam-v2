@@ -18,33 +18,33 @@ export default function Checkout() {
   const { user } = useAuth();
   const { t, isRTL } = useLang();
 
-  const [paymentMethod, setPaymentMethod]     = useState('cash');
-  const [address, setAddress]                 = useState('');
-  const [phone, setPhone]                     = useState('');
-  const [notes, setNotes]                     = useState('');
-  const [submitting, setSubmitting]           = useState(false);
-  const [promoCode, setPromoCode]             = useState('');
-  const [promoApplied, setPromoApplied]       = useState(null);
-  const [promoError, setPromoError]           = useState('');
-  const [promoLoading, setPromoLoading]       = useState(false);
-  const [locating, setLocating]               = useState(false);
-  const [showMap, setShowMap]                 = useState(false);
-  const [showSuccess, setShowSuccess]         = useState(false);
-  const [createdOrderId, setCreatedOrderId]   = useState(null);
-  const [finalTotal, setFinalTotal]           = useState(0);
+  const [paymentMethod, setPaymentMethod]         = useState('cash');
+  const [address, setAddress]                     = useState('');
+  const [phone, setPhone]                         = useState('');
+  const [notes, setNotes]                         = useState('');
+  const [submitting, setSubmitting]               = useState(false);
+  const [promoCode, setPromoCode]                 = useState('');
+  const [promoApplied, setPromoApplied]           = useState(null);
+  const [promoError, setPromoError]               = useState('');
+  const [promoLoading, setPromoLoading]           = useState(false);
+  const [locating, setLocating]                   = useState(false);
+  const [showMap, setShowMap]                     = useState(false);
+  const [showSuccess, setShowSuccess]             = useState(false);
+  const [createdOrderId, setCreatedOrderId]       = useState(null);
+  const [finalTotal, setFinalTotal]               = useState(0);
   const [scheduledDelivery, setScheduledDelivery] = useState(false);
-  const [scheduledTime, setScheduledTime]     = useState('');
-  const [contactless, setContactless]         = useState(false);
-  const [hasExactAmount, setHasExactAmount]   = useState(true);
-  const [customerAmount, setCustomerAmount]   = useState('');
-  const [deliveryLat, setDeliveryLat]         = useState(null);
-  const [deliveryLng, setDeliveryLng]         = useState(null);
+  const [scheduledTime, setScheduledTime]         = useState('');
+  const [contactless, setContactless]             = useState(false);
+  const [hasExactAmount, setHasExactAmount]       = useState(true);
+  const [customerAmount, setCustomerAmount]       = useState('');
+  const [deliveryLat, setDeliveryLat]             = useState(null);
+  const [deliveryLng, setDeliveryLng]             = useState(null);
   const isSubmittingRef = useRef(false);
 
-  const subtotal     = cartTotal;
-  const deliveryFee  = cart[0]?.deliveryFee || 15;
-  const discount     = promoApplied ? Math.round(subtotal * promoApplied.discount / 100) : 0;
-  const total        = Math.max(0, subtotal + deliveryFee - discount);
+  const subtotal    = cartTotal;
+  const deliveryFee = cart[0]?.deliveryFee || 15;
+  const discount    = promoApplied ? Math.round(subtotal * promoApplied.discount / 100) : 0;
+  const total       = Math.max(0, subtotal + deliveryFee - discount);
 
   useEffect(() => {
     if (itemCount === 0 && !showSuccess) navigate('/cart');
@@ -69,13 +69,11 @@ export default function Checkout() {
     setLocating(true);
     navigator.geolocation.getCurrentPosition(async (pos) => {
       const { latitude: lat, longitude: lng } = pos.coords;
-      setDeliveryLat(lat);
-      setDeliveryLng(lng);
+      setDeliveryLat(lat); setDeliveryLng(lng);
       try {
         const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`);
         const data = await res.json();
-        const short = [data.address?.road, data.address?.suburb, data.address?.city || data.address?.town]
-          .filter(Boolean).join(', ');
+        const short = [data.address?.road, data.address?.suburb, data.address?.city || data.address?.town].filter(Boolean).join(', ');
         setAddress(short || data.display_name);
       } catch { setAddress(`${lat.toFixed(4)}, ${lng.toFixed(4)}`); }
       setLocating(false);
@@ -90,8 +88,7 @@ export default function Checkout() {
 
     const lastOrderTime = localStorage.getItem('last_order_time');
     if (lastOrderTime && Date.now() - parseInt(lastOrderTime) < 30000) {
-      toast.error('Attendez avant de passer une autre commande');
-      return;
+      toast.error('Attendez avant de passer une autre commande'); return;
     }
 
     isSubmittingRef.current = true;
@@ -106,24 +103,15 @@ export default function Checkout() {
       if (contactless) finalNotes += '\n📦 Livraison sans contact';
       if (scheduledDelivery && scheduledTime) finalNotes += `\n⏰ Livraison programmée: ${scheduledTime}`;
 
-      const items = cart.map(item => ({
-        menu_item_id: item.id,
-        quantity: item.quantity,
-        price: item.price,
-      }));
+      const items = cart.map(item => ({ menu_item_id: item.id, quantity: item.quantity, price: item.price }));
 
       if (!restaurantId) { toast.error('Erreur: restaurant non trouvé'); setSubmitting(false); isSubmittingRef.current = false; return; }
       if (items.length === 0) { toast.error('Panier vide'); setSubmitting(false); isSubmittingRef.current = false; return; }
 
       const res = await API.post('/orders/create/', {
-        restaurant_id: restaurantId,
-        items,
-        delivery_address: address,
-        delivery_lat: deliveryLat,
-        delivery_lng: deliveryLng,
-        payment_method: paymentMethod,
-        notes: finalNotes,
-        promo_code: promoApplied?.code || null,
+        restaurant_id: restaurantId, items,
+        delivery_address: address, delivery_lat: deliveryLat, delivery_lng: deliveryLng,
+        payment_method: paymentMethod, notes: finalNotes, promo_code: promoApplied?.code || null,
       });
 
       localStorage.setItem('last_order_time', Date.now().toString());
@@ -132,16 +120,12 @@ export default function Checkout() {
       setCreatedOrderId(res.data.id);
       setShowSuccess(true);
 
-      // Confetti
       try {
         const confetti = (await import('canvas-confetti')).default;
         confetti({ particleCount: 120, spread: 80, origin: { y: 0.5 }, colors: ['#FF6B00', '#FF9A3C', '#fff'] });
       } catch {}
 
-      setTimeout(() => {
-        setShowSuccess(false);
-        navigate('/orders');
-      }, 3000);
+      setTimeout(() => { setShowSuccess(false); navigate('/orders'); }, 3000);
     } catch (err) {
       toast.error(err.response?.data?.error || 'Erreur lors de la commande');
     }
@@ -200,9 +184,17 @@ export default function Checkout() {
   const sectionStyle = { background: '#111827', borderRadius: '20px', padding: '18px', border: '1px solid #1f2937', marginBottom: '14px' };
   const labelStyle = { fontSize: '11px', fontWeight: '700', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'block', marginBottom: '8px' };
 
+  const PAYMENT_METHODS = [
+    { key: 'cash', icon: <Banknote size={22} />, label: 'Espèces', badge: null },
+    { key: 'card', icon: <CreditCard size={22} />, label: 'Carte',   badge: 'Bientôt' },
+  ];
+
   return (
     <div style={{ background: '#030712', minHeight: '100vh', paddingBottom: '200px', fontFamily: "'Plus Jakarta Sans', sans-serif", direction: isRTL ? 'rtl' : 'ltr' }}>
-      <style>{`@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');`}</style>
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+        @keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+      `}</style>
 
       {/* Header */}
       <div style={{ padding: '16px', display: 'flex', alignItems: 'center', gap: '12px', borderBottom: '1px solid #1f2937' }}>
@@ -256,7 +248,7 @@ export default function Checkout() {
           </div>
         </div>
 
-        {/* Scheduled delivery toggle */}
+        {/* Scheduled delivery */}
         <div style={sectionStyle}>
           <button type="button" onClick={() => setScheduledDelivery(!scheduledDelivery)}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
@@ -276,8 +268,7 @@ export default function Checkout() {
               <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} style={{ overflow: 'hidden' }}>
                 <div style={{ marginTop: '12px' }}>
                   <input type="datetime-local" value={scheduledTime} onChange={e => setScheduledTime(e.target.value)}
-                    min={new Date(Date.now() + 45 * 60000).toISOString().slice(0, 16)}
-                    style={{ ...inputStyle }} />
+                    min={new Date(Date.now() + 45 * 60000).toISOString().slice(0, 16)} style={inputStyle} />
                   <p style={{ fontSize: '11px', color: '#6b7280', marginTop: '6px' }}>Minimum 45 minutes à l'avance</p>
                 </div>
               </motion.div>
@@ -287,7 +278,7 @@ export default function Checkout() {
 
         {/* Contactless */}
         <div style={sectionStyle}>
-          <button type="button" onClick={() => { setContactless(!contactless); if (!contactless) setPaymentMethod('card'); }}
+          <button type="button" onClick={() => { setContactless(!contactless); if (!contactless) setPaymentMethod('cash'); }}
             style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>
             <div style={{ textAlign: 'left' }}>
               <p style={{ color: '#fff', fontSize: '14px', fontWeight: '700' }}>📦 Livraison sans contact</p>
@@ -303,12 +294,9 @@ export default function Checkout() {
         <div style={sectionStyle}>
           <label style={labelStyle}>💳 Mode de paiement</label>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
-            {[
-              { key: 'cash', icon: <Banknote size={22} />, label: 'Espèces', badge: null },
-              { key: 'card', icon: <CreditCard size={22} />, label: 'Carte', badge: 'Bientôt' },
-            ].map(m => {
-              const active = paymentMethod === m.key;
-              const disabled = (m.key === 'cash' && contactless) || m.key === 'card';
+            {PAYMENT_METHODS.map(m => {
+              const active   = paymentMethod === m.key;
+              const disabled = m.key === 'card';
               return (
                 <button key={m.key} type="button" onClick={() => !disabled && setPaymentMethod(m.key)} disabled={disabled}
                   style={{ padding: '14px', borderRadius: '14px', border: `2px solid ${active && !disabled ? '#FF6B00' : '#1f2937'}`, background: active && !disabled ? 'rgba(255,107,0,0.1)' : '#1f2937', cursor: disabled ? 'not-allowed' : 'pointer', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', opacity: disabled ? 0.5 : 1 }}>
@@ -325,7 +313,7 @@ export default function Checkout() {
           </div>
 
           {/* Cash change calculator */}
-          {paymentMethod === 'cash' && !contactless && (
+          {paymentMethod === 'cash' && (
             <div style={{ background: '#1f2937', borderRadius: '12px', padding: '12px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                 <div>
@@ -388,7 +376,7 @@ export default function Checkout() {
           {promoError && <p style={{ color: '#ef4444', fontSize: '12px', marginTop: '6px' }}>❌ {promoError}</p>}
         </div>
 
-        {/* Total summary */}
+        {/* Total */}
         <div style={sectionStyle}>
           <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: '#9ca3af', marginBottom: '8px' }}>
             <span>Sous-total</span><span>{subtotal.toFixed(0)} MAD</span>
@@ -421,8 +409,7 @@ export default function Checkout() {
           }}>
           {submitting
             ? <><Loader2 size={18} style={{ animation: 'spin 1s linear infinite' }} /> Commande en cours...</>
-            : `🛵 Commander · ${total.toFixed(0)} MAD`
-          }
+            : `🛵 Commander · ${total.toFixed(0)} MAD`}
         </button>
       </form>
 
@@ -439,11 +426,7 @@ export default function Checkout() {
                   <X size={16} color="#888" />
                 </button>
               </div>
-              <MapPicker onSelect={({ lat, lng, address: addr }) => {
-                setAddress(addr);
-                setDeliveryLat(lat);
-                setDeliveryLng(lng);
-              }} />
+              <MapPicker onSelect={({ lat, lng, address: addr }) => { setAddress(addr); setDeliveryLat(lat); setDeliveryLng(lng); }} />
               <button onClick={() => setShowMap(false)} style={{ width: '100%', padding: '14px', borderRadius: '14px', border: 'none', background: 'linear-gradient(135deg, #FF6B00, #FF9A3C)', color: '#fff', fontWeight: '800', fontSize: '15px', cursor: 'pointer', marginTop: '16px', fontFamily: 'inherit' }}>
                 ✓ Confirmer cette adresse
               </button>
@@ -451,8 +434,6 @@ export default function Checkout() {
           </motion.div>
         )}
       </AnimatePresence>
-
-      <style>{`@keyframes spin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }`}</style>
     </div>
   );
 }
