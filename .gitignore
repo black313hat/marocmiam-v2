@@ -1,2 +1,4 @@
 
 backend/firebase-service-account.json
+
+VITE_GOOGLE_CLIENT_ID=733230421422-p4glnl9gen1kpfb690gi8m08tfbn319l.apps.googleusercontent.com
